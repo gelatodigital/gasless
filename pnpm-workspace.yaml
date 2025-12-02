@@ -1,0 +1,10 @@
+packages:
+  - examples/*
+  - src
+
+catalog:
+  typescript: 5.9.3
+  viem: 2.39.3
+
+onlyBuiltDependencies:
+  - '@biomejs/biome'

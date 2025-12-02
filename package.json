@@ -1,0 +1,47 @@
+{
+  "name": "ferry-sdk",
+  "private": true,
+  "author": "Gelato",
+  "description": "Ferry SDK",
+  "homepage": "https://github.com/gelatodigital/ferry-sdk",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "types:check": "tsc --noEmit",
+    "biome:changed": "biome check --changed",
+    "biome:staged": "biome check --staged --write",
+    "biome:check": "biome check --write",
+    "biome:format": "biome format --write",
+    "prepare": "lefthook install",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish",
+    "clean": "pnpm -r clean"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.2",
+    "@changesets/cli": "2.29.7",
+    "@types/node": "latest",
+    "lefthook": "2.0.2",
+    "typescript": "catalog:",
+    "viem": "catalog:"
+  },
+  "engines": {
+    "node": ">=23"
+  },
+  "packageManager": "pnpm@10.15.0",
+  "pnpm": {
+    "overrides": {
+      "ferry-sdk": "workspace:*"
+    },
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "ferry-sdk": "*"
+      }
+    },
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "lefthook"
+    ]
+  }
+}

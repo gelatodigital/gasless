@@ -1,0 +1,25 @@
+# Lefthook configuration for Ferry SDK project
+# See: https://github.com/evilmartians/lefthook
+
+pre-commit:
+  parallel: true
+  commands:
+    build:
+      run: pnpm run build
+      stage_fixed: true
+      fail_text: "Build failed. Please fix the build errors above."
+
+    lint:
+      run: pnpm run biome:check
+      stage_fixed: true
+      fail_text: "Code linting failed. Please fix the linting errors above."
+
+    format:
+      run: pnpm run biome:format
+      stage_fixed: true
+      fail_text: "Code formatting failed. Please fix the errors above."
+    
+    types:
+      run: pnpm run types:check
+      stage_fixed: true
+      fail_text: "Type checking failed. Please fix the TypeScript errors above."
