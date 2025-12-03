@@ -1,0 +1,32 @@
+{
+  "name": "@gelatonetwork/ferry-sdk",
+  "version": "0.0.1",
+  "author": "Gelato",
+  "description": "Ferry SDK",
+  "main": "./_dist/index.js",
+  "types": "./_dist/index.d.ts",
+  "typings": "./_dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./_dist/index.d.ts",
+      "import": "./_dist/index.js",
+      "default": "./_dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project ./tsconfig.build.json"
+  },
+  "peerDependencies": {
+    "typescript": "catalog:",
+    "viem": "catalog:"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "viem": "catalog:"
+  }
+}
