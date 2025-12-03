@@ -8,7 +8,6 @@ import {
 } from 'viem';
 import {
   type EstimateUserOperationGasParameters,
-  estimateUserOperationGas,
   getPaymasterData as getPaymasterData_,
   getPaymasterStubData as getPaymasterStubData_,
   type PrepareUserOperationParameters,
@@ -22,6 +21,7 @@ import { getChainId as getChainId_, prepareAuthorization } from 'viem/actions';
 import { concat, encodeFunctionData, getAction } from 'viem/utils';
 import { AccountNotFoundError, type Payment, PaymentType } from '../../types/index.js';
 import type { GelatoBundlerClient } from '..';
+import { estimateUserOperationGas } from './estimateUserOperationGas.js';
 import type { Capabilities } from './getCapabilities.js';
 import { getUserOperationGasPrice } from './getUserOperationGasPrice.js';
 import { getUserOperationQuote } from './getUserOperationQuote.js';
@@ -368,26 +368,27 @@ export const prepareUserOperation = async <
       (request.paymaster && typeof request.paymasterPostOpGasLimit === 'undefined') ||
       (request.paymaster && typeof request.paymasterVerificationGasLimit === 'undefined')
     ) {
-      const gas = await getAction(
+      const gas = await estimateUserOperationGas(
         bundlerClient,
-        estimateUserOperationGas,
-        'estimateUserOperationGas'
-      )({
-        account,
-        // Some Bundlers fail if nullish gas values are provided for gas estimation :') –
-        // so we will need to set a default zeroish value.
-        callGasLimit: 0n,
-        preVerificationGas: 0n,
-        stateOverride,
-        verificationGasLimit: 0n,
-        ...(request.paymaster
-          ? {
-              paymasterPostOpGasLimit: 0n,
-              paymasterVerificationGasLimit: 0n
-            }
-          : {}),
-        ...request
-      } as EstimateUserOperationGasParameters);
+        {
+          account,
+          // Some Bundlers fail if nullish gas values are provided for gas estimation :') –
+          // so we will need to set a default zeroish value.
+          callGasLimit: 0n,
+          preVerificationGas: 0n,
+          stateOverride,
+          verificationGasLimit: 0n,
+          ...(request.paymaster
+            ? {
+                paymasterPostOpGasLimit: 0n,
+                paymasterVerificationGasLimit: 0n
+              }
+            : {}),
+          ...request
+        } as EstimateUserOperationGasParameters,
+        capabilities,
+        payment
+      );
       request = {
         ...request,
         callGasLimit: request.callGasLimit ?? gas.callGasLimit,
