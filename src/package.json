@@ -18,7 +18,8 @@
   },
   "peerDependencies": {
     "typescript": "catalog:",
-    "viem": "catalog:"
+    "viem": "catalog:",
+    "zod": "catalog:"
   },
   "peerDependenciesMeta": {
     "typescript": {

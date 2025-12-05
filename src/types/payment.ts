@@ -7,7 +7,7 @@ export enum PaymentType {
 
 export type TokenPayment = {
   type: PaymentType.Token;
-  address: Address;
+  address: Address | string;
 };
 
 export type SponsoredPayment = {
@@ -18,4 +18,4 @@ export type Payment = TokenPayment | SponsoredPayment;
 
 export const sponsored = (): Payment => ({ type: PaymentType.Sponsored });
 
-export const token = (address: Address): Payment => ({ address, type: PaymentType.Token });
+export const token = (address: Address | string): Payment => ({ address, type: PaymentType.Token });
