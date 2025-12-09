@@ -3,3 +3,4 @@ export * from './getFeeData.js';
 export * from './getFeeQuote.js';
 export * from './getStatus.js';
 export * from './sendTransaction.js';
+export * from './waitForTransaction.js';

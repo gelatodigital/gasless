@@ -12,7 +12,8 @@ import {
   getStatus,
   type SendTransactionParameters,
   type Status,
-  sendTransaction
+  sendTransaction,
+  waitForTransaction
 } from './actions/index.js';
 
 export * from './actions/index.js';
@@ -22,17 +23,18 @@ export type GelatoEvmRelayerClient = {
   getFeeData: (parameters: GetFeeDataParameters) => Promise<FeeData>;
   getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
   getStatus: (parameters: GetStatusParameters) => Promise<Status>;
+  waitForTransaction: (parameters: GetStatusParameters) => Promise<Status>;
   sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
 };
 
-export type GelatoRelayerClientConfig = {
+export type GelatoEvmRelayerClientConfig = {
   apiKey: string;
   testnet: boolean;
 };
 
 // TODO: the testnet/mainnet separation won't be necessary in the future
 export const createGelatoEvmRelayerClient = (
-  parameters: GelatoRelayerClientConfig
+  parameters: GelatoEvmRelayerClientConfig
 ): GelatoEvmRelayerClient => {
   const { apiKey, testnet } = parameters;
 
@@ -51,9 +53,10 @@ export const createGelatoEvmRelayerClient = (
 
   return {
     getCapabilities: () => getCapabilities(client),
-    getFeeData: (parameters: GetFeeDataParameters) => getFeeData(client, parameters),
-    getFeeQuote: (parameters: GetFeeQuoteParameters) => getFeeQuote(client, parameters),
-    getStatus: (parameters: GetStatusParameters) => getStatus(client, parameters),
-    sendTransaction: (parameters: SendTransactionParameters) => sendTransaction(client, parameters)
+    getFeeData: (parameters) => getFeeData(client, parameters),
+    getFeeQuote: (parameters) => getFeeQuote(client, parameters),
+    getStatus: (parameters) => getStatus(client, parameters),
+    sendTransaction: (parameters) => sendTransaction(client, parameters),
+    waitForTransaction: (parameters) => waitForTransaction(client, parameters)
   };
 };
