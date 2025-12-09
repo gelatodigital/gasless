@@ -2,7 +2,7 @@ import { baseSepolia } from 'viem/chains';
 import 'dotenv/config';
 import { createGelatoBundlerClient, sponsored } from '@gelatonetwork/ferry-sdk';
 import { toKernelSmartAccount } from 'permissionless/accounts';
-import { createWalletClient, type Hex, http, publicActions } from 'viem';
+import { createPublicClient, type Hex, http } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 
 const GELATO_API_KEY = process.env['GELATO_API_KEY'];
@@ -17,15 +17,15 @@ const chain = baseSepolia;
 const main = async () => {
   const owner = privateKeyToAccount((PRIVATE_KEY ?? generatePrivateKey()) as Hex);
 
-  const client = createWalletClient({
-    account: owner,
+  const client = createPublicClient({
     chain,
     transport: http()
-  }).extend(publicActions);
+  });
 
   const account = await toKernelSmartAccount({
     client,
     owners: [owner],
+    useMetaFactory: false,
     version: '0.3.3'
   });
 

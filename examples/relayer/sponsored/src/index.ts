@@ -1,9 +1,4 @@
-import {
-  createGelatoEvmRelayerClient,
-  type Status,
-  StatusCode,
-  sponsored
-} from '@gelatonetwork/ferry-sdk';
+import { createGelatoEvmRelayerClient, StatusCode, sponsored } from '@gelatonetwork/ferry-sdk';
 import 'dotenv/config';
 import { baseSepolia } from 'viem/chains';
 
@@ -25,14 +20,7 @@ const main = async () => {
 
   console.log(`hash: ${hash}`);
 
-  let status: Status;
-  while (true) {
-    status = await relayer.getStatus({ id: hash });
-
-    if (status.status !== StatusCode.Pending && status.status !== StatusCode.Submitted) {
-      break;
-    }
-  }
+  const status = await relayer.waitForStatus({ id: hash });
 
   if (status.status === StatusCode.Confirmed) {
     console.log(`transaction hash ${status.receipt.transactionHash}`);
