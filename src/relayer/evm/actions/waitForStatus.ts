@@ -1,12 +1,17 @@
 import type { Transport } from 'viem';
-import { type GetStatusParameters, getStatus, type Status, StatusCode } from './getStatus.js';
+import {
+  type GetStatusParameters,
+  getStatus,
+  StatusCode,
+  type TerminalStatus
+} from './getStatus.js';
 
 // TODO: use websockets
 // TODO: make polling interval configurable
-export const waitForTransaction = async (
+export const waitForStatus = async (
   client: ReturnType<Transport>,
   parameters: GetStatusParameters
-): Promise<Status> => {
+): Promise<TerminalStatus> => {
   while (true) {
     const status = await getStatus(client, parameters);
 

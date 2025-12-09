@@ -55,6 +55,12 @@ const revertedStatusSchema = baseStatusSchema.extend({
   status: z.literal(StatusCode.Reverted)
 });
 
+export const terminalStatusSchema = z.discriminatedUnion('status', [
+  confirmedStatusSchema,
+  rejectedStatusSchema,
+  revertedStatusSchema
+]);
+
 export const statusSchema = z.discriminatedUnion('status', [
   pendingStatusSchema,
   submittedStatusSchema,
@@ -62,6 +68,8 @@ export const statusSchema = z.discriminatedUnion('status', [
   rejectedStatusSchema,
   revertedStatusSchema
 ]);
+
+export type TerminalStatus = z.infer<typeof terminalStatusSchema>;
 
 export type Status = z.infer<typeof statusSchema>;
 
