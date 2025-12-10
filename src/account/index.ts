@@ -3,13 +3,16 @@ import type { SmartAccount } from 'viem/account-abstraction';
 import {
   createGelatoEvmRelayerClient,
   type FeeQuote,
-  type GelatoEvmRelayerClient
+  type GelatoEvmRelayerClient,
+  type TerminalStatus
 } from '../relayer/index.js';
 import {
   type GetFeeQuoteParameters,
   getFeeQuote,
   type SendTransactionParameters,
-  sendTransaction
+  type SendTransactionSyncParameters,
+  sendTransaction,
+  sendTransactionSync
 } from './actions/index.js';
 import type { GelatoSmartAccountImplementation } from './adapters/types/index.js';
 
@@ -20,6 +23,7 @@ export type GelatoSmartAccountClient = Pick<
   'getCapabilities' | 'getStatus' | 'waitForStatus'
 > & {
   sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
+  sendTransactionSync: (parameters: SendTransactionSyncParameters) => Promise<TerminalStatus>;
   getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
 };
 
@@ -49,6 +53,8 @@ export const createGelatoSmartAccountClient = async (
     getFeeQuote: (parameters) => getFeeQuote(client, account, capabilities, parameters),
     getStatus: (parameters) => client.getStatus(parameters),
     sendTransaction: (parameters) => sendTransaction(client, account, capabilities, parameters),
+    sendTransactionSync: (parameters) =>
+      sendTransactionSync(client, account, capabilities, parameters),
     waitForStatus: (parameters) => client.waitForStatus(parameters)
   };
 };

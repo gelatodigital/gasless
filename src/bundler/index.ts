@@ -3,7 +3,8 @@ import {
   type BundlerActions,
   type BundlerClient,
   type BundlerClientConfig,
-  createBundlerClient
+  createBundlerClient,
+  type UserOperationReceipt
 } from 'viem/account-abstraction';
 import { GELATO_PROD_API, GELATO_STAGING_API } from '../relayer/constants/index.js';
 import { getCapabilities } from '../relayer/evm/actions/index.js';
@@ -16,12 +17,17 @@ import {
   getUserOperationGasPrice,
   getUserOperationQuote,
   prepareUserOperation,
-  sendUserOperation
+  type SendUserOperationSyncParameters,
+  sendUserOperation,
+  sendUserOperationSync
 } from './actions/index.js';
 
 export * from './actions/index.js';
 
 export type GelatoBundlerActions = Partial<BundlerActions> & {
+  sendUserOperationSync: (
+    parameters: SendUserOperationSyncParameters
+  ) => Promise<UserOperationReceipt>;
   getUserOperationGasPrice: () => Promise<GetUserOperationGasPriceReturnType>;
   getUserOperationQuote: (
     parameters: GetUserOperationQuoteParameters
@@ -84,7 +90,9 @@ export const createGelatoBundlerClient = async (
         prepareUserOperation: (parameters) =>
           prepareUserOperation(client, parameters, capabilities, payment),
         sendUserOperation: (parameters) =>
-          sendUserOperation(client, parameters, capabilities, payment)
+          sendUserOperation(client, parameters, capabilities, payment),
+        sendUserOperationSync: (parameters) =>
+          sendUserOperationSync(client, parameters, capabilities, payment)
       }) as GelatoBundlerActions
   ) as unknown as GelatoBundlerClient;
 };
