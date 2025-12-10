@@ -2,7 +2,7 @@ import { type Call, zeroAddress } from 'viem';
 import type { SmartAccount } from 'viem/account-abstraction';
 import type { CapabilitiesByChain, FeeQuote, GelatoEvmRelayerClient } from '../../relayer/index.js';
 import { type Payment, PaymentType } from '../../types/index.js';
-import { appendPayment } from '../../utils/payment.js';
+import { appendPayment } from '../../utils/index.js';
 import type { GelatoSmartAccountImplementation } from '../adapters/types/index.js';
 
 export type GetFeeQuoteParameters = {
