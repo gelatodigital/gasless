@@ -40,7 +40,7 @@ const main = async () => {
    * Note:
    * You may also call relayer.getFeeQuote first
    * The returned quote should then be passed to relayer.sendTransaction
-   * This avoids sendTransaction from getting the quote again (duplicate)
+   * This avoids having sendTransaction fetch the quote again (duplicate)
    */
 
   const hash = await relayer.sendTransaction({
