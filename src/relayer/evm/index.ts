@@ -1,4 +1,5 @@
 import { type Hex, type HttpTransportConfig, http } from 'viem';
+import { GELATO_PROD_API, GELATO_STAGING_API } from '../constants/index.js';
 import {
   type Capabilities,
   type FeeData,
@@ -12,7 +13,9 @@ import {
   getStatus,
   type SendTransactionParameters,
   type Status,
-  sendTransaction
+  sendTransaction,
+  type TerminalStatus,
+  waitForStatus
 } from './actions/index.js';
 
 export * from './actions/index.js';
@@ -22,17 +25,18 @@ export type GelatoEvmRelayerClient = {
   getFeeData: (parameters: GetFeeDataParameters) => Promise<FeeData>;
   getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
   getStatus: (parameters: GetStatusParameters) => Promise<Status>;
+  waitForStatus: (parameters: GetStatusParameters) => Promise<TerminalStatus>;
   sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
 };
 
-export type GelatoRelayerClientConfig = {
+export type GelatoEvmRelayerClientConfig = {
   apiKey: string;
   testnet: boolean;
 };
 
 // TODO: the testnet/mainnet separation won't be necessary in the future
 export const createGelatoEvmRelayerClient = (
-  parameters: GelatoRelayerClientConfig
+  parameters: GelatoEvmRelayerClientConfig
 ): GelatoEvmRelayerClient => {
   const { apiKey, testnet } = parameters;
 
@@ -44,16 +48,17 @@ export const createGelatoEvmRelayerClient = (
     }
   };
 
-  const client = http(
-    testnet ? 'https://api.t.gelato.cloud/rpc' : 'https://api.gelato.cloud/rpc',
-    config
-  )({});
+  // TODO: can just use prod endpoint in the future
+  const base = testnet ? GELATO_STAGING_API : GELATO_PROD_API;
+
+  const client = http(`${base}/rpc`, config)({});
 
   return {
     getCapabilities: () => getCapabilities(client),
-    getFeeData: (parameters: GetFeeDataParameters) => getFeeData(client, parameters),
-    getFeeQuote: (parameters: GetFeeQuoteParameters) => getFeeQuote(client, parameters),
-    getStatus: (parameters: GetStatusParameters) => getStatus(client, parameters),
-    sendTransaction: (parameters: SendTransactionParameters) => sendTransaction(client, parameters)
+    getFeeData: (parameters) => getFeeData(client, parameters),
+    getFeeQuote: (parameters) => getFeeQuote(client, parameters),
+    getStatus: (parameters) => getStatus(client, parameters),
+    sendTransaction: (parameters) => sendTransaction(client, parameters),
+    waitForStatus: (parameters) => waitForStatus(client, parameters)
   };
 };

@@ -5,6 +5,7 @@ import {
   type BundlerClientConfig,
   createBundlerClient
 } from 'viem/account-abstraction';
+import { GELATO_PROD_API, GELATO_STAGING_API } from '../relayer/constants/index.js';
 import { getCapabilities } from '../relayer/evm/actions/index.js';
 import { type Payment, PaymentType } from '../types/index.js';
 import {
@@ -41,7 +42,8 @@ export const createGelatoBundlerClient = async (
   const { client: client_, payment, apiKey } = parameters;
 
   // TODO: can just use prod endpoint in the future
-  const base = client_.chain.testnet ? 'https://api.t.gelato.cloud' : 'https://api.gelato.cloud';
+  const base = client_.chain.testnet ? GELATO_STAGING_API : GELATO_PROD_API;
+
   let endpoint = `${base}/rpc/${client_.chain.id}`;
 
   if (payment) {

@@ -1,11 +1,4 @@
-import {
-  type Call,
-  type Chain,
-  type Client,
-  erc20Abi,
-  type SignedAuthorization,
-  type Transport
-} from 'viem';
+import type { Call, Chain, Client, SignedAuthorization, Transport } from 'viem';
 import {
   type EstimateUserOperationGasParameters,
   getPaymasterData as getPaymasterData_,
@@ -21,6 +14,7 @@ import { getChainId as getChainId_, prepareAuthorization } from 'viem/actions';
 import { concat, encodeFunctionData, getAction } from 'viem/utils';
 import type { CapabilitiesByChain } from '../../relayer/evm/actions/index.js';
 import { AccountNotFoundError, type Payment, PaymentType } from '../../types/index.js';
+import { appendPayment } from '../../utils/payment.js';
 import type { GelatoBundlerClient } from '..';
 import { estimateUserOperationGas } from './estimateUserOperationGas.js';
 import { getUserOperationGasPrice } from './getUserOperationGasPrice.js';
@@ -124,18 +118,6 @@ export const prepareUserOperation = async <
   const [{ callsWithoutPayment, callData }, factory, fees, nonce, authorization] =
     await Promise.all([
       (async () => {
-        const mockPaymentCall =
-          payment?.type === PaymentType.Token
-            ? ({
-                data: encodeFunctionData({
-                  abi: erc20Abi,
-                  args: [capabilities.feeCollector, 1n],
-                  functionName: 'transfer'
-                }),
-                to: payment.address
-              } as Call)
-            : undefined;
-
         if (parameters.calls) {
           const callsWithoutPayment = parameters.calls.map((call_) => {
             const call = call_ as Call;
@@ -148,9 +130,12 @@ export const prepareUserOperation = async <
             return call as Call;
           });
 
-          const callData = await account.encodeCalls(
-            mockPaymentCall ? [...callsWithoutPayment, mockPaymentCall] : callsWithoutPayment
-          );
+          const calls =
+            payment?.type === PaymentType.Token
+              ? appendPayment(callsWithoutPayment, payment.address, capabilities.feeCollector, 1n)
+              : callsWithoutPayment;
+
+          const callData = await account.encodeCalls(calls);
 
           return {
             callData,
@@ -158,7 +143,7 @@ export const prepareUserOperation = async <
           };
         }
 
-        if (!mockPaymentCall) {
+        if (payment?.type !== PaymentType.Token) {
           return {
             callData: parameters.callData,
             callsWithoutPayment: undefined
@@ -171,8 +156,16 @@ export const prepareUserOperation = async <
           );
         }
 
-        const callsWithoutPayment = await account.decodeCalls(parameters.callData);
-        const callData = await account.encodeCalls([...callsWithoutPayment, mockPaymentCall]);
+        const callsWithoutPayment = (await account.decodeCalls(parameters.callData)) as Call[];
+
+        const calls = appendPayment(
+          callsWithoutPayment,
+          payment.address,
+          capabilities.feeCollector,
+          1n
+        );
+
+        const callData = await account.encodeCalls(calls);
 
         return {
           callData,
@@ -317,7 +310,7 @@ export const prepareUserOperation = async <
   // Fill User Operation with gas-related properties.
   ////////////////////////////////////////////////////////////////////////////////
 
-  if (quote && payment?.type === PaymentType.Token) {
+  if (quote && callsWithoutPayment && payment?.type === PaymentType.Token) {
     const quote = await getUserOperationQuote(
       bundlerClient,
       {
@@ -329,17 +322,14 @@ export const prepareUserOperation = async <
       payment
     );
 
-    const paymentCall = {
-      data: encodeFunctionData({
-        abi: erc20Abi,
-        args: [capabilities.feeCollector, quote.fee],
-        functionName: 'transfer'
-      }),
-      to: payment.address
-    } as Call;
+    const calls = appendPayment(
+      callsWithoutPayment,
+      payment.address,
+      capabilities.feeCollector,
+      quote.fee
+    );
 
-    // biome-ignore lint/style/noNonNullAssertion: copied from viem
-    const callData = await account.encodeCalls([...callsWithoutPayment!, paymentCall]);
+    const callData = await account.encodeCalls(calls);
 
     request = {
       ...request,
