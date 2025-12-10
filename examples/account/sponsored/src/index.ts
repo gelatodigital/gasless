@@ -33,8 +33,7 @@ const main = async () => {
 
   const relayer = await createGelatoSmartAccountClient({
     account,
-    apiKey: GELATO_API_KEY,
-    testnet: chain.testnet
+    apiKey: GELATO_API_KEY
   });
 
   const hash = await relayer.sendTransaction({

@@ -26,7 +26,7 @@ export const getFeeQuote = async (
   const { estimatedGas, estimatedL1Fee } = await account.estimate({ calls });
 
   return await client.getFeeQuote({
-    chainId: account.chainId,
+    chainId: account.chain.id,
     gas: estimatedGas,
     l1Fee: estimatedL1Fee,
     token: payment.type === PaymentType.Token ? payment.address : zeroAddress

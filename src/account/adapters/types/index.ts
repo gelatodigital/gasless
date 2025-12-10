@@ -1,4 +1,4 @@
-import type { Abi, Call, Hex, SignedAuthorization } from 'viem';
+import type { Abi, Call, Chain, Hex, SignedAuthorization } from 'viem';
 import type { EntryPointVersion, SmartAccountImplementation } from 'viem/account-abstraction';
 
 export type EstimateParameters = {
@@ -15,7 +15,7 @@ export type EncodeCallDataParameters = EstimateParameters & {
 };
 
 export type GelatoSmartAccountExtension = {
-  chainId: number;
+  chain: Chain;
 };
 
 export type GelatoSmartAccountActions = {

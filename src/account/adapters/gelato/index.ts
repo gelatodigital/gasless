@@ -87,7 +87,7 @@ export const toGelatoSmartAccount = (
       account: undefined as never,
       address: GELATO_DELEGATION_ADDRESS
     },
-    chainId: client.chain.id,
+    chain: client.chain,
     client,
     encodeCallData: async (parameters) => {
       const { calls, nonce = await getNonce() } = parameters;

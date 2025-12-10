@@ -3,8 +3,7 @@ import type { SmartAccount } from 'viem/account-abstraction';
 import {
   createGelatoEvmRelayerClient,
   type FeeQuote,
-  type GelatoEvmRelayerClient,
-  type GelatoEvmRelayerClientConfig
+  type GelatoEvmRelayerClient
 } from '../relayer/index.js';
 import {
   type GetFeeQuoteParameters,
@@ -24,21 +23,25 @@ export type GelatoSmartAccountClient = Pick<
   getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
 };
 
-export type GelatoSmartAccountClientConfig = GelatoEvmRelayerClientConfig & {
+export type GelatoSmartAccountClientConfig = {
+  apiKey: string;
   account: SmartAccount<GelatoSmartAccountImplementation>;
 };
 
 export const createGelatoSmartAccountClient = async (
   parameters: GelatoSmartAccountClientConfig
 ): Promise<GelatoSmartAccountClient> => {
-  const { account } = parameters;
+  const { account, apiKey } = parameters;
 
-  const client = createGelatoEvmRelayerClient(parameters);
+  const client = createGelatoEvmRelayerClient({
+    apiKey,
+    testnet: account.chain.testnet ?? false
+  });
 
-  const capabilities = (await client.getCapabilities())[account.chainId];
+  const capabilities = (await client.getCapabilities())[account.chain.id];
 
   if (!capabilities) {
-    throw new Error(`Chain not supported: ${account.chainId}`);
+    throw new Error(`Chain not supported: ${account.chain.id}`);
   }
 
   return {

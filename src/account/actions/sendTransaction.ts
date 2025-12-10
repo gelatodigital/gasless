@@ -37,7 +37,7 @@ export const sendTransaction = async (
 
   return await client.sendTransaction({
     authorizationList,
-    chainId: account.chainId,
+    chainId: account.chain.id,
     context: quote?.context,
     data,
     payment,
