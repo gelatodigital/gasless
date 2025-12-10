@@ -5,9 +5,11 @@ import {
   InvalidAddressError,
   isAddress,
   numberToHex,
+  pad,
   type RpcAccountStateOverride,
   type RpcStateMapping,
   type RpcStateOverride,
+  type SignedAuthorization,
   StateAssignmentConflictError,
   type StateMapping,
   type StateOverride
@@ -69,4 +71,21 @@ export function serializeStateOverride(
     rpcStateOverride[address] = serializeAccountStateOverride(accountState);
   }
   return rpcStateOverride;
+}
+
+export function formatAuthorization(authorization: SignedAuthorization) {
+  return {
+    address: authorization.address,
+    chainId: numberToHex(authorization.chainId),
+    nonce: numberToHex(authorization.nonce),
+    r: authorization.r
+      ? numberToHex(BigInt(authorization.r), { size: 32 })
+      : pad('0x', { size: 32 }),
+    s: authorization.s
+      ? numberToHex(BigInt(authorization.s), { size: 32 })
+      : pad('0x', { size: 32 }),
+    yParity: authorization.yParity
+      ? numberToHex(authorization.yParity, { size: 1 })
+      : pad('0x', { size: 32 })
+  };
 }

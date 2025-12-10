@@ -1,6 +1,6 @@
 import type { Address, Hex, SignedAuthorizationList, Transport } from 'viem';
-import { serializeAuthorizationList } from 'viem/utils';
 import { hexData32Schema, type Payment } from '../../../types/index.js';
+import { formatAuthorization } from '../../../utils/index.js';
 
 export type SendTransactionParameters = {
   authorizationList?: SignedAuthorizationList;
@@ -20,9 +20,7 @@ export const sendTransaction = async (
   const result = await client.request({
     method: 'relayer_sendTransaction',
     params: {
-      authorizationList: authorizationList
-        ? serializeAuthorizationList(authorizationList)
-        : undefined,
+      authorizationList: authorizationList ? authorizationList.map(formatAuthorization) : undefined,
       chainId: chainId.toString(),
       context,
       data,
