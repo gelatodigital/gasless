@@ -9,14 +9,14 @@ import {
   type UserOperation
 } from 'viem/account-abstraction';
 import { parseAccount } from 'viem/accounts';
+import type { CapabilitiesByChain } from '../../relayer/evm/actions/index.js';
 import { AccountNotFoundError, type Payment } from '../../types/index.js';
-import type { Capabilities } from './getCapabilities.js';
 import { prepareUserOperation } from './prepareUserOperation.js';
 
 export const sendUserOperation = async <account extends SmartAccount | undefined>(
   client: Client<Transport, Chain | undefined, account>,
   parameters: SendUserOperationParameters,
-  capabilities: Capabilities,
+  capabilities: CapabilitiesByChain,
   payment?: Payment
 ): Promise<SendUserOperationReturnType> => {
   const { account: account_ = client.account, entryPointAddress } = parameters;

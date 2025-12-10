@@ -1,0 +1,59 @@
+import { type Hex, type HttpTransportConfig, http } from 'viem';
+import {
+  type Capabilities,
+  type FeeData,
+  type FeeQuote,
+  type GetFeeDataParameters,
+  type GetFeeQuoteParameters,
+  type GetStatusParameters,
+  getCapabilities,
+  getFeeData,
+  getFeeQuote,
+  getStatus,
+  type SendTransactionParameters,
+  type Status,
+  sendTransaction
+} from './actions/index.js';
+
+export * from './actions/index.js';
+
+export type GelatoEvmRelayerClient = {
+  getCapabilities: () => Promise<Capabilities>;
+  getFeeData: (parameters: GetFeeDataParameters) => Promise<FeeData>;
+  getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
+  getStatus: (parameters: GetStatusParameters) => Promise<Status>;
+  sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
+};
+
+export type GelatoRelayerClientConfig = {
+  apiKey: string;
+  testnet: boolean;
+};
+
+// TODO: the testnet/mainnet separation won't be necessary in the future
+export const createGelatoEvmRelayerClient = (
+  parameters: GelatoRelayerClientConfig
+): GelatoEvmRelayerClient => {
+  const { apiKey, testnet } = parameters;
+
+  const config: HttpTransportConfig = {
+    fetchOptions: {
+      headers: {
+        'X-API-Key': apiKey
+      }
+    }
+  };
+
+  const client = http(
+    testnet ? 'https://api.t.gelato.cloud/rpc' : 'https://api.gelato.cloud/rpc',
+    config
+  )({});
+
+  return {
+    getCapabilities: () => getCapabilities(client),
+    getFeeData: (parameters: GetFeeDataParameters) => getFeeData(client, parameters),
+    getFeeQuote: (parameters: GetFeeQuoteParameters) => getFeeQuote(client, parameters),
+    getStatus: (parameters: GetStatusParameters) => getStatus(client, parameters),
+    sendTransaction: (parameters: SendTransactionParameters) => sendTransaction(client, parameters)
+  };
+};

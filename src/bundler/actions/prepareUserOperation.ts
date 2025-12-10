@@ -19,10 +19,10 @@ import {
 import { parseAccount } from 'viem/accounts';
 import { getChainId as getChainId_, prepareAuthorization } from 'viem/actions';
 import { concat, encodeFunctionData, getAction } from 'viem/utils';
+import type { CapabilitiesByChain } from '../../relayer/evm/actions/index.js';
 import { AccountNotFoundError, type Payment, PaymentType } from '../../types/index.js';
 import type { GelatoBundlerClient } from '..';
 import { estimateUserOperationGas } from './estimateUserOperationGas.js';
-import type { Capabilities } from './getCapabilities.js';
 import { getUserOperationGasPrice } from './getUserOperationGasPrice.js';
 import { getUserOperationQuote } from './getUserOperationQuote.js';
 
@@ -44,7 +44,7 @@ export const prepareUserOperation = async <
 >(
   client: Client<Transport, Chain | undefined, account>,
   parameters_: PrepareUserOperationParameters<account, accountOverride, calls, request>,
-  capabilities: Capabilities,
+  capabilities: CapabilitiesByChain,
   payment?: Payment,
   quote: boolean = false
 ): Promise<PrepareUserOperationReturnType<account, accountOverride, calls, request>> => {

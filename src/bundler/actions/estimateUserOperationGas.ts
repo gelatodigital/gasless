@@ -10,15 +10,15 @@ import {
   type UserOperation
 } from 'viem/account-abstraction';
 import { parseAccount } from 'viem/accounts';
+import type { CapabilitiesByChain } from '../../relayer/evm/actions/index.js';
 import { AccountNotFoundError, type Payment } from '../../types/index.js';
 import { serializeStateOverride } from '../../utils/index.js';
-import type { Capabilities } from './getCapabilities.js';
 import { prepareUserOperation } from './prepareUserOperation.js';
 
 export const estimateUserOperationGas = async <account extends SmartAccount | undefined>(
   client: Client<Transport, Chain | undefined, account>,
   parameters: EstimateUserOperationGasParameters,
-  capabilities: Capabilities,
+  capabilities: CapabilitiesByChain,
   payment?: Payment
 ): Promise<EstimateUserOperationGasReturnType> => {
   const { account: account_ = client.account, entryPointAddress, stateOverride } = parameters;

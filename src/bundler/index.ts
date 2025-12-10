@@ -5,18 +5,20 @@ import {
   type BundlerClientConfig,
   createBundlerClient
 } from 'viem/account-abstraction';
+import { getCapabilities } from '../relayer/evm/actions/index.js';
 import { type Payment, PaymentType } from '../types/index.js';
 import {
   estimateUserOperationGas,
   type GetUserOperationGasPriceReturnType,
   type GetUserOperationQuoteParameters,
   type GetUserOperationQuoteReturnType,
-  getCapabilities,
   getUserOperationGasPrice,
   getUserOperationQuote,
   prepareUserOperation,
   sendUserOperation
 } from './actions/index.js';
+
+export * from './actions/index.js';
 
 export type GelatoBundlerActions = Partial<BundlerActions> & {
   getUserOperationGasPrice: () => Promise<GetUserOperationGasPriceReturnType>;
@@ -38,6 +40,7 @@ export const createGelatoBundlerClient = async (
 ): Promise<GelatoBundlerClient> => {
   const { client: client_, payment, apiKey } = parameters;
 
+  // TODO: can just use prod endpoint in the future
   const base = client_.chain.testnet ? 'https://api.t.gelato.cloud' : 'https://api.gelato.cloud';
   let endpoint = `${base}/rpc/${client_.chain.id}`;
 
@@ -62,7 +65,11 @@ export const createGelatoBundlerClient = async (
     transport
   });
 
-  const capabilities = await getCapabilities(client);
+  const capabilities = (await getCapabilities(transport({})))[client_.chain.id];
+
+  if (!capabilities) {
+    throw new Error(`Chain not supported: ${client_.chain.id}`);
+  }
 
   return client.extend(
     (client) =>

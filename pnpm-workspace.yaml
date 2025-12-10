@@ -6,6 +6,7 @@ catalog:
   permissionless: 0.3.2
   typescript: 5.9.3
   viem: 2.39.3
+  zod: 4.1.13
 
 onlyBuiltDependencies:
   - '@biomejs/biome'

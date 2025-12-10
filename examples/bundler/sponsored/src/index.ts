@@ -46,11 +46,11 @@ const main = async () => {
     ]
   });
 
-  console.log('userOpHash:', hash);
+  console.log(`hash: ${hash}`);
 
   const { receipt } = await bundler.waitForUserOperationReceipt({ hash });
 
-  console.log('transaction hash:', receipt.transactionHash);
+  console.log(`transaction hash ${receipt.transactionHash}`);
   process.exit(0);
 };
 
