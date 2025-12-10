@@ -45,7 +45,7 @@ export const createGelatoBundlerClient = async (
     endpoint += `?payment=${payment.type}`;
 
     if (payment.type === PaymentType.Token) {
-      endpoint += `&token=${payment.address}`; // TODO: rename token to address
+      endpoint += `&address=${payment.address}`;
     }
   }
 
