@@ -1,4 +1,5 @@
 import { type Hex, type HttpTransportConfig, http } from 'viem';
+import { GELATO_PROD_API, GELATO_STAGING_API } from '../constants/index.js';
 import {
   type Capabilities,
   type FeeData,
@@ -47,10 +48,10 @@ export const createGelatoEvmRelayerClient = (
     }
   };
 
-  const client = http(
-    testnet ? 'https://api.t.gelato.cloud/rpc' : 'https://api.gelato.cloud/rpc',
-    config
-  )({});
+  // TODO: can just use prod endpoint in the future
+  const base = testnet ? GELATO_STAGING_API : GELATO_PROD_API;
+
+  const client = http(`${base}/rpc`, config)({});
 
   return {
     getCapabilities: () => getCapabilities(client),
