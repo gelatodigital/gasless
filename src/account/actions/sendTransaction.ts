@@ -1,6 +1,6 @@
 import type { Hex } from 'viem';
 import type { SmartAccount } from 'viem/account-abstraction';
-import type { Capabilities, FeeQuote, GelatoEvmRelayerClient } from '../../relayer/index.js';
+import type { CapabilitiesByChain, FeeQuote, GelatoEvmRelayerClient } from '../../relayer/index.js';
 import { PaymentType } from '../../types/index.js';
 import { appendPayment } from '../../utils/payment.js';
 import type { GelatoSmartAccountImplementation } from '../adapters/types/index.js';
@@ -13,16 +13,10 @@ export type SendTransactionParameters = GetFeeQuoteParameters & {
 export const sendTransaction = async (
   client: GelatoEvmRelayerClient,
   account: SmartAccount<GelatoSmartAccountImplementation>,
-  capabilities: Capabilities,
+  capabilities: CapabilitiesByChain,
   parameters: SendTransactionParameters
 ): Promise<Hex> => {
-  const { chainId, payment } = parameters;
-
-  const feeCollector = capabilities[chainId]?.feeCollector;
-
-  if (!feeCollector) {
-    throw new Error(`Unsupported chainId: ${chainId}`);
-  }
+  const { payment } = parameters;
 
   const [quote, nonce, deployed] = await Promise.all([
     payment.type === PaymentType.Token
@@ -33,7 +27,7 @@ export const sendTransaction = async (
   ]);
 
   const calls = quote
-    ? appendPayment(parameters.calls, quote.token.address, feeCollector, quote.fee)
+    ? appendPayment(parameters.calls, quote.token.address, capabilities.feeCollector, quote.fee)
     : parameters.calls;
 
   const [data, authorizationList] = await Promise.all([
@@ -43,7 +37,7 @@ export const sendTransaction = async (
 
   return await client.sendTransaction({
     authorizationList,
-    chainId,
+    chainId: account.chainId,
     context: quote?.context,
     data,
     payment,

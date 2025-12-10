@@ -14,6 +14,10 @@ export type EncodeCallDataParameters = EstimateParameters & {
   nonce?: bigint;
 };
 
+export type GelatoSmartAccountExtension = {
+  chainId: number;
+};
+
 export type GelatoSmartAccountActions = {
   estimate: (parameters: EstimateParameters) => Promise<EstimateReturnType>;
   encodeCallData: (parameters: EncodeCallDataParameters) => Promise<Hex>;
@@ -23,5 +27,10 @@ export type GelatoSmartAccountActions = {
 export type GelatoSmartAccountImplementation<
   entryPointAbi extends Abi | readonly unknown[] = Abi,
   entryPointVersion extends EntryPointVersion = EntryPointVersion
-> = SmartAccountImplementation<entryPointAbi, entryPointVersion, object, true> &
+> = SmartAccountImplementation<
+  entryPointAbi,
+  entryPointVersion,
+  GelatoSmartAccountExtension,
+  true
+> &
   GelatoSmartAccountActions;

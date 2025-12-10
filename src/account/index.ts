@@ -35,7 +35,11 @@ export const createGelatoSmartAccountClient = async (
 
   const client = createGelatoEvmRelayerClient(parameters);
 
-  const capabilities = await client.getCapabilities();
+  const capabilities = (await client.getCapabilities())[account.chainId];
+
+  if (!capabilities) {
+    throw new Error(`Chain not supported: ${account.chainId}`);
+  }
 
   return {
     getCapabilities: () => client.getCapabilities(),

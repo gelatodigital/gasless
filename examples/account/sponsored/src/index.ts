@@ -44,7 +44,6 @@ const main = async () => {
         to: '0xE27C1359cf02B49acC6474311Bd79d1f10b1f8De'
       }
     ],
-    chainId: chain.id,
     payment: sponsored()
   });
 
