@@ -36,6 +36,13 @@ const main = async () => {
     apiKey: GELATO_API_KEY
   });
 
+  /**
+   * Note:
+   * You may also call relayer.getFeeQuote first
+   * The returned quote should then be passed to relayer.sendTransaction
+   * This avoids sendTransaction from getting the quote again (duplicate)
+   */
+
   const hash = await relayer.sendTransaction({
     calls: [
       {
@@ -44,6 +51,9 @@ const main = async () => {
       }
     ],
     payment: sponsored()
+    /**
+     * Here you may specify a nonce or nonceKey (2-dimensional nonces)
+     */
   });
 
   console.log(`hash: ${hash}`);

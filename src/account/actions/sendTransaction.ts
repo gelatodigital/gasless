@@ -6,9 +6,24 @@ import { appendPayment } from '../../utils/index.js';
 import type { GelatoSmartAccountImplementation } from '../adapters/types/index.js';
 import { type GetFeeQuoteParameters, getFeeQuote } from './getFeeQuote.js';
 
-export type SendTransactionParameters = GetFeeQuoteParameters & {
-  quote?: FeeQuote;
-};
+export type NonceOrKey =
+  | {
+      nonce?: never;
+      nonceKey?: never;
+    }
+  | {
+      nonce: bigint;
+      nonceKey?: never;
+    }
+  | {
+      nonce?: never;
+      nonceKey: bigint;
+    };
+
+export type SendTransactionParameters = GetFeeQuoteParameters &
+  NonceOrKey & {
+    quote?: FeeQuote;
+  };
 
 export const sendTransaction = async (
   client: GelatoEvmRelayerClient,
@@ -22,7 +37,7 @@ export const sendTransaction = async (
     payment.type === PaymentType.Token
       ? (parameters.quote ?? (await getFeeQuote(client, account, capabilities, parameters)))
       : undefined,
-    account.getNonce(),
+    parameters.nonce ?? account.getNonce({ key: parameters.nonceKey }),
     account.isDeployed()
   ]);
 

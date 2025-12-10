@@ -90,7 +90,7 @@ export const toGelatoSmartAccount = (
     chain: client.chain,
     client,
     encodeCallData: async (parameters) => {
-      const { calls, nonce = await getNonce() } = parameters;
+      const { calls, nonce } = parameters;
 
       const signature = await signTypedData(client, {
         account: owner,

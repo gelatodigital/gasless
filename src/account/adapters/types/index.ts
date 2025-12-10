@@ -11,7 +11,7 @@ export type EstimateReturnType = {
 };
 
 export type EncodeCallDataParameters = EstimateParameters & {
-  nonce?: bigint;
+  nonce: bigint;
 };
 
 export type GelatoSmartAccountExtension = {
