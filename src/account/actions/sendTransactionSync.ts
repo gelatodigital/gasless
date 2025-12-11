@@ -11,7 +11,7 @@ import { getFeeQuote } from './getFeeQuote.js';
 import type { SendTransactionParameters } from './sendTransaction.js';
 
 export type SendTransactionSyncParameters = SendTransactionParameters & {
-  timeout: number;
+  timeout?: number;
 };
 
 export const sendTransactionSync = async (

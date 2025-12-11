@@ -1,9 +1,9 @@
 {
-  "name": "ferry-sdk",
+  "name": "@gelatocloud/gasless",
   "private": true,
   "author": "Gelato",
-  "description": "Ferry SDK",
-  "homepage": "https://github.com/gelatodigital/ferry-sdk",
+  "description": "Gelato Gasless SDK: All-in-one solution for gasless transactions",
+  "homepage": "https://github.com/gelatodigital/gasless",
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
@@ -31,11 +31,11 @@
   "packageManager": "pnpm@10.15.0",
   "pnpm": {
     "overrides": {
-      "ferry-sdk": "workspace:*"
+      "@gelatocloud/gasless": "workspace:*"
     },
     "peerDependencyRules": {
       "allowedVersions": {
-        "ferry-sdk": "*"
+        "@gelatocloud/gasless": "*"
       }
     },
     "onlyBuiltDependencies": [

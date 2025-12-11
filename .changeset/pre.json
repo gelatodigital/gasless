@@ -1,0 +1,8 @@
+{
+  "changesets": [],
+  "initialVersions": {
+    "@gelatocloud/gasless": "0.0.0"
+  },
+  "mode": "pre",
+  "tag": "alpha"
+}

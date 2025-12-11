@@ -3,7 +3,7 @@ import {
   StatusCode,
   sponsored,
   toGelatoSmartAccount
-} from '@gelatonetwork/ferry-sdk';
+} from '@gelatocloud/gasless';
 import 'dotenv/config';
 import { createPublicClient, type Hex, http } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
@@ -17,6 +17,12 @@ if (!GELATO_API_KEY) {
 }
 
 const chain = baseSepolia;
+
+function encodeNonce(key: bigint, seq: bigint): bigint {
+  // key: up to 192 bits
+  // seq: up to 64 bits
+  return (key << 64n) | seq;
+}
 
 const main = async () => {
   const owner = privateKeyToAccount((PRIVATE_KEY ?? generatePrivateKey()) as Hex);
@@ -42,31 +48,30 @@ const main = async () => {
    * The returned quote should then be passed to relayer.sendTransaction
    * This avoids having sendTransaction fetch the quote again (duplicate)
    */
-
-  const hash = await relayer.sendTransaction({
+  const result = await relayer.sendTransactionSync({
     calls: [
       {
         data: '0xd09de08a',
         to: '0xE27C1359cf02B49acC6474311Bd79d1f10b1f8De'
       }
     ],
-    payment: sponsored()
     /**
-     * Here you may specify a nonce or nonceKey (2-dimensional nonces)
+     * (Optional) Here you may specify a nonce or nonceKey
      */
+    nonce: encodeNonce(BigInt(Date.now()), 0n),
+    payment: sponsored()
   });
 
-  console.log(`hash: ${hash}`);
-
-  const status = await relayer.waitForStatus({ id: hash });
-
-  if (status.status === StatusCode.Confirmed) {
-    console.log(`transaction hash ${status.receipt.transactionHash}`);
-    process.exit(0);
+  if (result.status === StatusCode.Included) {
+    console.log(
+      `Transaction got ${result.status} status with hash: ${result.receipt.transactionHash}`
+    );
   } else {
-    console.log(`transaction failed, message: ${status.message}, data: ${status.data}`);
+    console.log(`Transaction failed, message: ${result.message}, data: ${result.data}`);
     process.exit(1);
   }
+
+  process.exit(0);
 };
 
 main().catch((error) => {

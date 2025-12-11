@@ -1,6 +1,6 @@
 import { baseSepolia } from 'viem/chains';
 import 'dotenv/config';
-import { createGelatoBundlerClient, sponsored } from '@gelatonetwork/ferry-sdk';
+import { createGelatoBundlerClient, sponsored } from '@gelatocloud/gasless';
 import { toKernelSmartAccount } from 'permissionless/accounts';
 import { createPublicClient, type Hex, http } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
@@ -46,11 +46,12 @@ const main = async () => {
     ]
   });
 
-  console.log(`hash: ${hash}`);
+  console.log(`User operation hash: ${hash}`);
 
   const { receipt } = await bundler.waitForUserOperationReceipt({ hash });
 
-  console.log(`transaction hash ${receipt.transactionHash}`);
+  console.log(`Transaction hash: ${receipt.transactionHash}`);
+
   process.exit(0);
 };
 
