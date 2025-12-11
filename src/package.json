@@ -1,8 +1,8 @@
 {
-  "name": "@gelatonetwork/ferry-sdk",
-  "version": "0.0.1",
+  "name": "@gelatocloud/gasless",
+  "version": "0.0.0",
   "author": "Gelato",
-  "description": "Ferry SDK",
+  "description": "Gelato Gasless SDK: All-in-one solution for gasless transactions",
   "main": "./_dist/index.js",
   "types": "./_dist/index.d.ts",
   "typings": "./_dist/index.d.ts",
@@ -16,10 +16,12 @@
   "scripts": {
     "build": "tsc --project ./tsconfig.build.json"
   },
+  "dependencies": {
+    "zod": "catalog:"
+  },
   "peerDependencies": {
     "typescript": "catalog:",
-    "viem": "catalog:",
-    "zod": "catalog:"
+    "viem": "catalog:"
   },
   "peerDependenciesMeta": {
     "typescript": {
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "typescript": "catalog:",
-    "viem": "catalog:"
+    "viem": "catalog:",
+    "zod": "catalog:"
   }
 }

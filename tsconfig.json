@@ -24,7 +24,7 @@
     "noPropertyAccessFromIndexSignature": true,
 
     "paths": {
-      "@gelatonetwork/ferry-sdk": ["./src"]
+      "@gelatocloud/gasless": ["./src"]
     }
   },
   "exclude": ["node_modules", "_dist"]
