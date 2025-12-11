@@ -12,8 +12,10 @@ import {
   getFeeQuote,
   getStatus,
   type SendTransactionParameters,
+  type SendTransactionSyncParameters,
   type Status,
   sendTransaction,
+  sendTransactionSync,
   type TerminalStatus,
   waitForStatus
 } from './actions/index.js';
@@ -27,6 +29,7 @@ export type GelatoEvmRelayerClient = {
   getStatus: (parameters: GetStatusParameters) => Promise<Status>;
   waitForStatus: (parameters: GetStatusParameters) => Promise<TerminalStatus>;
   sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
+  sendTransactionSync: (parameters: SendTransactionSyncParameters) => Promise<TerminalStatus>;
 };
 
 export type GelatoEvmRelayerClientConfig = {
@@ -59,6 +62,7 @@ export const createGelatoEvmRelayerClient = (
     getFeeQuote: (parameters) => getFeeQuote(client, parameters),
     getStatus: (parameters) => getStatus(client, parameters),
     sendTransaction: (parameters) => sendTransaction(client, parameters),
+    sendTransactionSync: (parameters) => sendTransactionSync(client, parameters),
     waitForStatus: (parameters) => waitForStatus(client, parameters)
   };
 };
