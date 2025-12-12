@@ -13,7 +13,7 @@ const chain = baseSepolia;
 const main = async () => {
   const relayer = createGelatoEvmRelayerClient({ apiKey: GELATO_API_KEY, testnet: chain.testnet });
 
-  const id = await relayer.sendTransaction({
+  const id = await relayer.sendTransactionSync({
     chainId: chain.id,
     data: '0xd09de08a',
     payment: sponsored(),
