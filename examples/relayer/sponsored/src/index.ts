@@ -13,22 +13,18 @@ const chain = baseSepolia;
 const main = async () => {
   const relayer = createGelatoEvmRelayerClient({ apiKey: GELATO_API_KEY, testnet: chain.testnet });
 
-  const id = await relayer.sendTransactionSync({
+  const result = await relayer.sendTransactionSync({
     chainId: chain.id,
     data: '0xd09de08a',
     payment: sponsored(),
     to: '0xE27C1359cf02B49acC6474311Bd79d1f10b1f8De'
   });
 
-  console.log(`Gelato transaction id: ${id}`);
-
-  const status = await relayer.waitForStatus({ id });
-
-  if (status.status === StatusCode.Included) {
-    console.log(`Transaction hash: ${status.receipt.transactionHash}`);
+  if (result.status === StatusCode.Included) {
+    console.log(`Transaction hash: ${result.receipt.transactionHash}`);
     process.exit(0);
   } else {
-    console.log(`Transaction failed, message: ${status.message}, data: ${status.data}`);
+    console.log(`Transaction failed, message: ${result.message}, data: ${result.data}`);
     process.exit(1);
   }
 };
