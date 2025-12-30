@@ -6,7 +6,7 @@ import {
   createBundlerClient,
   type UserOperationReceipt
 } from 'viem/account-abstraction';
-import { GELATO_PROD_API, GELATO_STAGING_API } from '../relayer/constants/index.js';
+import { GELATO_PROD_API, GELATO_STAGING_API } from '../constants/index.js';
 import { getCapabilities } from '../relayer/evm/actions/index.js';
 import { type Payment, PaymentType } from '../types/index.js';
 import {
