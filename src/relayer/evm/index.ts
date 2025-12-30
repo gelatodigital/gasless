@@ -1,5 +1,5 @@
 import { type Hex, type HttpTransportConfig, http } from 'viem';
-import { GELATO_PROD_API, GELATO_STAGING_API } from '../constants/index.js';
+import { GELATO_PROD_API, GELATO_STAGING_API } from '../../constants/index.js';
 import {
   type Capabilities,
   type FeeData,
