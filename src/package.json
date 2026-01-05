@@ -20,13 +20,7 @@
     "zod": "catalog:"
   },
   "peerDependencies": {
-    "typescript": "catalog:",
-    "viem": "catalog:"
-  },
-  "peerDependenciesMeta": {
-    "typescript": {
-      "optional": true
-    }
+    "viem": ">=2.0.0"
   },
   "devDependencies": {
     "typescript": "catalog:",
