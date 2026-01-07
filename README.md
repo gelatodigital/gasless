@@ -1,7 +1,6 @@
 # @gelatocloud/gasless
 
 [![npm version](https://img.shields.io/npm/v/@gelatocloud/gasless.svg)](https://www.npmjs.com/package/@gelatocloud/gasless)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ### All-in-one solution for gasless transactions.
 

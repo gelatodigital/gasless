@@ -3,6 +3,15 @@
   "version": "0.0.0",
   "author": "Gelato",
   "description": "Gelato Gasless SDK: All-in-one solution for gasless transactions",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gelatodigital/gasless.git",
+    "directory": "src"
+  },
+  "homepage": "https://docs.gelato.cloud",
+  "bugs": {
+    "url": "https://github.com/gelatodigital/gasless/issues"
+  },
   "main": "./_dist/index.js",
   "types": "./_dist/index.d.ts",
   "typings": "./_dist/index.d.ts",
