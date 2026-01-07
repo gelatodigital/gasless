@@ -62,7 +62,7 @@ console.log(`Transaction hash: ${receipt.transactionHash}`);
 ```
 
 **Asynchronous**
-```typescript
+**Asynchronous:**
 import { createGelatoEvmRelayerClient, StatusCode, sponsored } from '@gelatocloud/gasless';
 import { baseSepolia } from 'viem/chains';
 
