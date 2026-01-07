@@ -13,6 +13,7 @@
 - **Flexible payment models** - Support for sponsored transactions, ERC-20 token payments, or native currency.
 - **2D nonce support** - Advanced nonce management using both `nonce` and `nonceKey` for parallelized execution.
 - **Type-safe** - Implemented on top of [viem](https://viem.sh), offering complete TypeScript type safety and developer ergonomics.
+- **Synchronous methods**: Send transaction and get the receipt in a single call
 
 ### Learn more in our [docs](https://docs.gelato.cloud)
 
@@ -39,6 +40,28 @@ export GELATO_API_KEY="your-api-key"
 
 Direct gasless transaction relay without smart accounts. Best for simple sponsored transactions.
 
+**Synchronous:**
+```typescript
+import { createGelatoEvmRelayerClient, sponsored } from '@gelatocloud/gasless';
+import { baseSepolia } from 'viem/chains';
+
+const relayer = createGelatoEvmRelayerClient({
+  apiKey: process.env.GELATO_API_KEY,
+  testnet: true
+});
+
+// Send and wait for inclusion in one call
+const receipt = await relayer.sendTransactionSync({
+  chainId: baseSepolia.id,
+  to: '0xTargetContract...',
+  data: '0xCalldata...',
+  payment: sponsored()
+});
+
+console.log(`Transaction hash: ${receipt.transactionHash}`);
+```
+
+**Asynchronous:**
 ```typescript
 import { createGelatoEvmRelayerClient, StatusCode, sponsored } from '@gelatocloud/gasless';
 import { baseSepolia } from 'viem/chains';
@@ -48,16 +71,16 @@ const relayer = createGelatoEvmRelayerClient({
   testnet: true
 });
 
-// Send a sponsored transaction
-const hash = await relayer.sendTransaction({
+// Send transaction (returns immediately with task ID)
+const taskId = await relayer.sendTransaction({
   chainId: baseSepolia.id,
   to: '0xTargetContract...',
   data: '0xCalldata...',
   payment: sponsored()
 });
 
-// Wait for confirmation
-const status = await relayer.waitForStatus({ id: hash });
+// Poll for status separately
+const status = await relayer.waitForStatus({ id: taskId });
 
 if (status.status === StatusCode.Included) {
   console.log(`Transaction hash: ${status.receipt.transactionHash}`);
@@ -68,11 +91,11 @@ if (status.status === StatusCode.Included) {
 
 Gelato's smart account implementation with ERC-7821 delegation pattern.
 
+**Synchronous:**
 ```typescript
 import {
   createGelatoSmartAccountClient,
   toGelatoSmartAccount,
-  StatusCode,
   sponsored
 } from '@gelatocloud/gasless';
 import { createPublicClient, http } from 'viem';
@@ -81,13 +104,13 @@ import { baseSepolia } from 'viem/chains';
 
 const owner = privateKeyToAccount('0xYourPrivateKey...');
 
-const client = createPublicClient({
+const publicClient = createPublicClient({
   chain: baseSepolia,
   transport: http()
 });
 
 // Create a Gelato smart account
-const account = toGelatoSmartAccount({ client, owner });
+const account = toGelatoSmartAccount({ client: publicClient, owner });
 
 // Create the smart account client
 const client = await createGelatoSmartAccountClient({
@@ -95,8 +118,8 @@ const client = await createGelatoSmartAccountClient({
   apiKey: process.env.GELATO_API_KEY
 });
 
-// Send a sponsored transaction with multiple calls
-const hash = await client.sendTransaction({
+// Send and wait for inclusion in one call
+const receipt = await client.sendTransactionSync({
   calls: [
     { to: '0xContract1...', data: '0xCalldata1...' },
     { to: '0xContract2...', data: '0xCalldata2...' }
@@ -105,8 +128,28 @@ const hash = await client.sendTransaction({
   // Optional: nonce or nonceKey for 2D nonce management
 });
 
-// Wait for confirmation
-const status = await client.waitForStatus({ id: hash });
+console.log(`Transaction hash: ${receipt.transactionHash}`);
+```
+
+**Asynchronous:**
+```typescript
+import {
+  createGelatoSmartAccountClient,
+  toGelatoSmartAccount,
+  StatusCode,
+  sponsored
+} from '@gelatocloud/gasless';
+
+// ... same setup as above ...
+
+// Send transaction (returns immediately with task ID)
+const taskId = await client.sendTransaction({
+  calls: [{ to: '0xContract...', data: '0xCalldata...' }],
+  payment: sponsored()
+});
+
+// Poll for status separately
+const status = await client.waitForStatus({ id: taskId });
 
 if (status.status === StatusCode.Included) {
   console.log(`Transaction hash: ${status.receipt.transactionHash}`);
@@ -206,8 +249,10 @@ const client = createGelatoEvmRelayerClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendTransaction` | `{ chainId, to, data, payment, authorizationList?, context? }` | `Promise<Hex>` | Submit a transaction |
+| `sendTransactionSync` | `{ chainId, to, data, payment, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
 | `waitForStatus` | `{ id: string }` | `Promise<TerminalStatus>` | Wait for final status |
+| `waitForInclusion` | `{ id: string }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 | `getFeeData` | `{ chainId, gas, l1Fee? }` | `Promise<FeeData>` | Get network fee data |
 | `getFeeQuote` | `{ chainId, gas, token, l1Fee? }` | `Promise<FeeQuote>` | Get fee quote for token payment |
@@ -243,9 +288,11 @@ const client = await createGelatoSmartAccountClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendTransaction` | `{ calls, payment, nonce?, nonceKey?, quote? }` | `Promise<Hex>` | Send transaction(s) |
+| `sendTransactionSync` | `{ calls, payment, nonce?, nonceKey?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getFeeQuote` | `{ calls, payment }` | `Promise<FeeQuote>` | Get fee quote |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
 | `waitForStatus` | `{ id: string }` | `Promise<TerminalStatus>` | Wait for final status |
+| `waitForInclusion` | `{ id: string }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 
 **Nonce Options:**
@@ -275,6 +322,7 @@ const bundler = await createGelatoBundlerClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendUserOperation` | `{ calls }` | `Promise<Hex>` | Send a user operation |
+| `sendUserOperationSync` | `{ calls, timeout }` | `Promise<UserOperationReceipt>` | Send and wait for receipt |
 | `waitForUserOperationReceipt` | `{ hash }` | `Promise<{ receipt }>` | Wait for receipt |
 | `estimateUserOperationGas` | `UserOperationParams` | `Promise<GasEstimate>` | Estimate gas |
 | `prepareUserOperation` | `UserOperationParams` | `Promise<UserOperation>` | Prepare operation |

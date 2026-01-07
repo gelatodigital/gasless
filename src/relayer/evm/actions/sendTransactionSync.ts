@@ -1,6 +1,7 @@
 import type { Transport } from 'viem';
 import { formatAuthorization } from '../../../utils/index.js';
-import { type TerminalStatus, terminalStatusSchema } from './getStatus.js';
+import { type TransactionReceipt, terminalStatusSchemaWithId } from './getStatus.js';
+import { handleTerminalStatus } from './handleTerminalStatus.js';
 import type { SendTransactionParameters } from './sendTransaction.js';
 
 export type SendTransactionSyncParameters = SendTransactionParameters & {
@@ -10,7 +11,7 @@ export type SendTransactionSyncParameters = SendTransactionParameters & {
 export const sendTransactionSync = async (
   client: ReturnType<Transport>,
   parameters: SendTransactionSyncParameters
-): Promise<TerminalStatus> => {
+): Promise<TransactionReceipt> => {
   const { chainId, data, to, payment, context, authorizationList, timeout } = parameters;
 
   const result = await client.request({
@@ -26,5 +27,7 @@ export const sendTransactionSync = async (
     }
   });
 
-  return terminalStatusSchema.parse(result);
+  const output = terminalStatusSchemaWithId.parse(result);
+
+  return handleTerminalStatus(output.id, output);
 };

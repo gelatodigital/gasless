@@ -1,0 +1,27 @@
+import { TransactionRejectedError, TransactionRevertedError } from '../errors/index.js';
+import { StatusCode, type TerminalStatus, type TransactionReceipt } from './getStatus.js';
+
+export const handleTerminalStatus = (id: string, status: TerminalStatus): TransactionReceipt => {
+  if (status.status === StatusCode.Included) {
+    return status.receipt;
+  }
+
+  if (status.status === StatusCode.Reverted) {
+    throw new TransactionRevertedError({
+      chainId: status.chainId,
+      createdAt: status.createdAt,
+      errorData: status.data,
+      errorMessage: status.message,
+      id,
+      receipt: status.receipt
+    });
+  }
+
+  throw new TransactionRejectedError({
+    chainId: status.chainId,
+    createdAt: status.createdAt,
+    errorData: status.data,
+    errorMessage: status.message,
+    id
+  });
+};

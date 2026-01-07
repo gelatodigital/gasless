@@ -43,6 +43,9 @@ compose-dev.yml
 .devcontainer/
 .pnpm-store/
 
+# Copied from root during prepublishOnly - excluded from git
+./src/README.md
+
 # Lockfiles (choose which one to keep based on package manager)
 # yarn.lock
 # package-lock.json

@@ -2,7 +2,7 @@ import type { SmartAccount } from 'viem/account-abstraction';
 import type {
   CapabilitiesByChain,
   GelatoEvmRelayerClient,
-  TerminalStatus
+  TransactionReceipt
 } from '../../relayer/index.js';
 import { PaymentType } from '../../types/index.js';
 import { appendPayment } from '../../utils/index.js';
@@ -19,7 +19,7 @@ export const sendTransactionSync = async (
   account: SmartAccount<GelatoSmartAccountImplementation>,
   capabilities: CapabilitiesByChain,
   parameters: SendTransactionSyncParameters
-): Promise<TerminalStatus> => {
+): Promise<TransactionReceipt> => {
   const { payment, timeout } = parameters;
 
   const [quote, nonce, deployed] = await Promise.all([
