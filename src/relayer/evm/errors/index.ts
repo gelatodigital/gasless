@@ -8,14 +8,20 @@ export class TransactionRejectedError extends BaseError {
   readonly errorData?: unknown;
   readonly errorMessage?: string;
 
-  constructor(params: {
+  constructor({
+    id,
+    chainId,
+    createdAt,
+    errorMessage,
+    errorData
+  }: {
     id: string;
     chainId: number;
     createdAt: number;
     errorMessage?: string;
     errorData?: unknown;
   }) {
-    super(`Transaction with id "${params.id}" rejected with message: ${params.errorMessage}.`, {
+    super(`Transaction with id "${id}" rejected with message: ${errorMessage}.`, {
       metaMessages: [
         'The transaction was rejected by the relayer. This could mean that the transaction was invalid, simulation failed, payment was insufficient or that the relayer did not approve it for some other reason.',
         ' ',
@@ -26,11 +32,11 @@ export class TransactionRejectedError extends BaseError {
       ],
       name: 'TransactionRejectedError'
     });
-    this.id = params.id;
-    this.chainId = params.chainId;
-    this.createdAt = params.createdAt;
-    this.errorData = params.errorData;
-    this.errorMessage = params.errorMessage;
+    this.id = id;
+    this.chainId = chainId;
+    this.createdAt = createdAt;
+    this.errorData = errorData;
+    this.errorMessage = errorMessage;
   }
 }
 

@@ -249,8 +249,10 @@ const client = createGelatoEvmRelayerClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendTransaction` | `{ chainId, to, data, payment, authorizationList?, context? }` | `Promise<Hex>` | Submit a transaction |
+| `sendTransactionSync` | `{ chainId, to, data, payment, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
 | `waitForStatus` | `{ id: string }` | `Promise<TerminalStatus>` | Wait for final status |
+| `waitForInclusion` | `{ id: string }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 | `getFeeData` | `{ chainId, gas, l1Fee? }` | `Promise<FeeData>` | Get network fee data |
 | `getFeeQuote` | `{ chainId, gas, token, l1Fee? }` | `Promise<FeeQuote>` | Get fee quote for token payment |
@@ -286,10 +288,11 @@ const client = await createGelatoSmartAccountClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendTransaction` | `{ calls, payment, nonce?, nonceKey?, quote? }` | `Promise<Hex>` | Send transaction(s) |
+| `sendTransactionSync` | `{ calls, payment, nonce?, nonceKey?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getFeeQuote` | `{ calls, payment }` | `Promise<FeeQuote>` | Get fee quote |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
 | `waitForStatus` | `{ id: string }` | `Promise<TerminalStatus>` | Wait for final status |
-| `waitForInclusion` | `{ id: string }` | `Promise<TransactionReceipt>` | Wait for receipt |
+| `waitForInclusion` | `{ id: string }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 
 **Nonce Options:**
@@ -319,6 +322,7 @@ const bundler = await createGelatoBundlerClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendUserOperation` | `{ calls }` | `Promise<Hex>` | Send a user operation |
+| `sendUserOperationSync` | `{ calls, timeout }` | `Promise<UserOperationReceipt>` | Send and wait for receipt |
 | `waitForUserOperationReceipt` | `{ hash }` | `Promise<{ receipt }>` | Wait for receipt |
 | `estimateUserOperationGas` | `UserOperationParams` | `Promise<GasEstimate>` | Estimate gas |
 | `prepareUserOperation` | `UserOperationParams` | `Promise<UserOperation>` | Prepare operation |
