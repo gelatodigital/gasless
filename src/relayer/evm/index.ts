@@ -4,12 +4,16 @@ import {
   type Capabilities,
   type FeeData,
   type FeeQuote,
+  type GelatoStatus,
+  type GelatoTerminalStatus,
   type GetFeeDataParameters,
   type GetFeeQuoteParameters,
+  type GetGelatoStatusParameters,
   type GetStatusParameters,
   getCapabilities,
   getFeeData,
   getFeeQuote,
+  getGelatoStatus,
   getStatus,
   type SendTransactionParameters,
   type SendTransactionSyncParameters,
@@ -17,6 +21,7 @@ import {
   sendTransaction,
   sendTransactionSync,
   type TerminalStatus,
+  waitForGelatoStatus,
   waitForStatus
 } from './actions/index.js';
 
@@ -26,7 +31,9 @@ export type GelatoEvmRelayerClient = {
   getCapabilities: () => Promise<Capabilities>;
   getFeeData: (parameters: GetFeeDataParameters) => Promise<FeeData>;
   getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
+  getGelatoStatus: (parameters: GetGelatoStatusParameters) => Promise<GelatoStatus>;
   getStatus: (parameters: GetStatusParameters) => Promise<Status>;
+  waitForGelatoStatus: (parameters: GetGelatoStatusParameters) => Promise<GelatoTerminalStatus>;
   waitForStatus: (parameters: GetStatusParameters) => Promise<TerminalStatus>;
   sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
   sendTransactionSync: (parameters: SendTransactionSyncParameters) => Promise<TerminalStatus>;
@@ -60,9 +67,11 @@ export const createGelatoEvmRelayerClient = (
     getCapabilities: () => getCapabilities(client),
     getFeeData: (parameters) => getFeeData(client, parameters),
     getFeeQuote: (parameters) => getFeeQuote(client, parameters),
+    getGelatoStatus: (parameters) => getGelatoStatus(client, parameters),
     getStatus: (parameters) => getStatus(client, parameters),
     sendTransaction: (parameters) => sendTransaction(client, parameters),
     sendTransactionSync: (parameters) => sendTransactionSync(client, parameters),
+    waitForGelatoStatus: (parameters) => waitForGelatoStatus(client, parameters),
     waitForStatus: (parameters) => waitForStatus(client, parameters)
   };
 };
