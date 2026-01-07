@@ -14,7 +14,7 @@
     "biome:format": "biome format --write",
     "prepare": "lefthook install",
     "changeset:publish": "pnpm build && changeset publish",
-    "changeset:version": "changeset version && pnpm format",
+    "changeset:version": "changeset version && pnpm biome:format",
     "clean": "pnpm -r clean"
   },
   "devDependencies": {
