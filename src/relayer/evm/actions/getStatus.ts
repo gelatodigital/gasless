@@ -52,6 +52,7 @@ const rejectedStatusSchema = baseStatusSchema.extend({
 const revertedStatusSchema = baseStatusSchema.extend({
   data: z.string(),
   message: z.string().optional(),
+  receipt: receiptSchema,
   status: z.literal(StatusCode.Reverted)
 });
 
@@ -59,6 +60,12 @@ export const terminalStatusSchema = z.discriminatedUnion('status', [
   includedStatusSchema,
   rejectedStatusSchema,
   revertedStatusSchema
+]);
+
+export const terminalStatusSchemaWithId = z.discriminatedUnion('status', [
+  includedStatusSchema.extend({ id: z.string() }),
+  rejectedStatusSchema.extend({ id: z.string() }),
+  revertedStatusSchema.extend({ id: z.string() })
 ]);
 
 export const statusSchema = z.discriminatedUnion('status', [
@@ -72,6 +79,8 @@ export const statusSchema = z.discriminatedUnion('status', [
 export type TerminalStatus = z.infer<typeof terminalStatusSchema>;
 
 export type Status = z.infer<typeof statusSchema>;
+
+export type TransactionReceipt = z.infer<typeof receiptSchema>;
 
 export type GetStatusParameters = {
   id: string;

@@ -1,6 +1,7 @@
 import type { Transport } from 'viem';
 import { formatAuthorization } from '../../../utils/index.js';
-import { type TerminalStatus, terminalStatusSchema } from './getStatus.js';
+import { TransactionRejectedError, TransactionRevertedError } from '../errors/index.js';
+import { StatusCode, type TransactionReceipt, terminalStatusSchemaWithId } from './getStatus.js';
 import type { SendTransactionParameters } from './sendTransaction.js';
 
 export type SendTransactionSyncParameters = SendTransactionParameters & {
@@ -10,7 +11,7 @@ export type SendTransactionSyncParameters = SendTransactionParameters & {
 export const sendTransactionSync = async (
   client: ReturnType<Transport>,
   parameters: SendTransactionSyncParameters
-): Promise<TerminalStatus> => {
+): Promise<TransactionReceipt> => {
   const { chainId, data, to, payment, context, authorizationList, timeout } = parameters;
 
   const result = await client.request({
@@ -26,5 +27,28 @@ export const sendTransactionSync = async (
     }
   });
 
-  return terminalStatusSchema.parse(result);
+  const output = terminalStatusSchemaWithId.parse(result);
+
+  if (output.status === StatusCode.Included) {
+    return output.receipt;
+  }
+
+  if (output.status === StatusCode.Reverted) {
+    throw new TransactionRevertedError({
+      chainId: output.chainId,
+      createdAt: output.createdAt,
+      errorData: output.data,
+      errorMessage: output.message,
+      id: output.id,
+      receipt: output.receipt
+    });
+  }
+
+  throw new TransactionRejectedError({
+    chainId: output.chainId,
+    createdAt: output.createdAt,
+    errorData: output.data,
+    errorMessage: output.message,
+    id: output.id
+  });
 };

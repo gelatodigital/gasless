@@ -1,6 +1,5 @@
 import {
   createGelatoSmartAccountClient,
-  StatusCode,
   sponsored,
   toGelatoSmartAccount
 } from '@gelatocloud/gasless';
@@ -48,7 +47,7 @@ const main = async () => {
    * The returned quote should then be passed to relayer.sendTransaction
    * This avoids having sendTransaction fetch the quote again (duplicate)
    */
-  const result = await relayer.sendTransactionSync({
+  const receipt = await relayer.sendTransactionSync({
     calls: [
       {
         data: '0xd09de08a',
@@ -61,16 +60,7 @@ const main = async () => {
     nonce: encodeNonce(BigInt(Date.now()), 0n),
     payment: sponsored()
   });
-
-  if (result.status === StatusCode.Included) {
-    console.log(
-      `Transaction got ${result.status} status with hash: ${result.receipt.transactionHash}`
-    );
-  } else {
-    console.log(`Transaction failed, message: ${result.message}, data: ${result.data}`);
-    process.exit(1);
-  }
-
+  console.log(`Transaction hash: ${receipt.transactionHash}`);
   process.exit(0);
 };
 

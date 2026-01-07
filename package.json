@@ -2,6 +2,7 @@
   "name": "@gelatocloud/gasless",
   "private": true,
   "author": "Gelato",
+  "license": "MIT",
   "description": "Gelato Gasless SDK: All-in-one solution for gasless transactions",
   "homepage": "https://github.com/gelatodigital/gasless",
   "type": "module",

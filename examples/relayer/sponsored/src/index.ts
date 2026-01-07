@@ -1,4 +1,4 @@
-import { createGelatoEvmRelayerClient, StatusCode, sponsored } from '@gelatocloud/gasless';
+import { createGelatoEvmRelayerClient, sponsored } from '@gelatocloud/gasless';
 import 'dotenv/config';
 import { baseSepolia } from 'viem/chains';
 
@@ -13,20 +13,14 @@ const chain = baseSepolia;
 const main = async () => {
   const relayer = createGelatoEvmRelayerClient({ apiKey: GELATO_API_KEY, testnet: chain.testnet });
 
-  const result = await relayer.sendTransactionSync({
+  const receipt = await relayer.sendTransactionSync({
     chainId: chain.id,
     data: '0xd09de08a',
     payment: sponsored(),
     to: '0xE27C1359cf02B49acC6474311Bd79d1f10b1f8De'
   });
 
-  if (result.status === StatusCode.Included) {
-    console.log(`Transaction hash: ${result.receipt.transactionHash}`);
-    process.exit(0);
-  } else {
-    console.log(`Transaction failed, message: ${result.message}, data: ${result.data}`);
-    process.exit(1);
-  }
+  console.log(`Transaction hash: ${receipt.transactionHash}`);
 };
 
 main().catch((error) => {
