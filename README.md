@@ -61,8 +61,8 @@ const receipt = await relayer.sendTransactionSync({
 console.log(`Transaction hash: ${receipt.transactionHash}`);
 ```
 
-**Asynchronous**
 **Asynchronous:**
+```typescript
 import { createGelatoEvmRelayerClient, StatusCode, sponsored } from '@gelatocloud/gasless';
 import { baseSepolia } from 'viem/chains';
 
