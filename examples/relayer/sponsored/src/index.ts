@@ -1,5 +1,13 @@
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load root .env first (defaults)
+config({ path: resolve(__dirname, '../../../../.env') });
+
+// Load local .env to override (optional)
+config({ override: true });
+
 import { createGelatoEvmRelayerClient, sponsored } from '@gelatocloud/gasless';
-import 'dotenv/config';
 import { baseSepolia } from 'viem/chains';
 
 const GELATO_API_KEY = process.env['GELATO_API_KEY'];
