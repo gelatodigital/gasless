@@ -1,5 +1,14 @@
 # @gelatocloud/gasless
 
+## 0.0.2
+
+### Patch Changes
+
+- 80ca9fe: chore: add links to package.json
+- 80ca9fe: feat: transaction reverted and rejected errors
+- 80ca9fe: feat: add waitForInclusion
+- 80ca9fe: feat: return receipt on sync methods
+
 ## 0.0.1
 
 ### Patch Changes
