@@ -1,6 +1,6 @@
 {
   "name": "@gelatocloud/gasless",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "Gelato",
   "license": "MIT",
   "description": "Gelato Gasless SDK: All-in-one solution for gasless transactions",

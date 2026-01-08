@@ -1,5 +1,11 @@
 # @gelatocloud/gasless
 
+## 0.0.3
+
+### Patch Changes
+
+- 11d95cc: fixed prepublish flow
+
 ## 0.0.2
 
 ### Patch Changes
