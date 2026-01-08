@@ -18,16 +18,29 @@ The Bundler provides full ERC-4337 compliance, allowing you to use any compatibl
    pnpm install
    ```
 
-2. Configure environment:
+2. Configure environment variables (see [Environment Variables](#environment-variables) section below)
+
+## Environment Variables
+
+This example loads environment variables from two sources:
+
+1. **Root `.env`** (at project root) - Shared defaults for all examples
+2. **Local `.env`** (in this directory) - Optional overrides
+
+Local values take precedence over root values. To set up:
+
+1. Copy the root `.env.example` to `.env` at the project root:
    ```bash
-   cp .env.example .env
+   cp ../../../.env.example ../../../.env
    ```
 
-3. Add your credentials to `.env`:
+2. Add your credentials to the root `.env`:
    ```
    GELATO_API_KEY="your-api-key"
    PRIVATE_KEY="0x..."  # Optional - generates random key if not set
    ```
+
+3. (Optional) Create a local `.env` in this directory to override specific values for this example
 
 ## Run
 

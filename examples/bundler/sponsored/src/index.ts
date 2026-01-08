@@ -1,9 +1,17 @@
-import { baseSepolia } from 'viem/chains';
-import 'dotenv/config';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load root .env first (defaults)
+config({ path: resolve(__dirname, '../../../../.env') });
+
+// Load local .env to override (optional)
+config({ override: true });
+
 import { createGelatoBundlerClient, sponsored } from '@gelatocloud/gasless';
 import { toKernelSmartAccount } from 'permissionless/accounts';
 import { createPublicClient, type Hex, http } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
+import { baseSepolia } from 'viem/chains';
 
 const GELATO_API_KEY = process.env['GELATO_API_KEY'];
 const PRIVATE_KEY = process.env['PRIVATE_KEY'];

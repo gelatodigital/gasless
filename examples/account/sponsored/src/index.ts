@@ -1,9 +1,17 @@
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load root .env first (defaults)
+config({ path: resolve(__dirname, '../../../../.env') });
+
+// Load local .env to override (optional)
+config({ override: true });
+
 import {
   createGelatoSmartAccountClient,
   sponsored,
   toGelatoSmartAccount
 } from '@gelatocloud/gasless';
-import 'dotenv/config';
 import { createPublicClient, type Hex, http } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { baseSepolia } from 'viem/chains';
