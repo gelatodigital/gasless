@@ -1,5 +1,11 @@
 # @gelatocloud/gasless
 
+## 0.0.4
+
+### Patch Changes
+
+- c9b2a8a: added missing receipt field on gelato_getStatus endpoint
+
 ## 0.0.3
 
 ### Patch Changes
