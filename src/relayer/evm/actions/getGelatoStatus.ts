@@ -58,6 +58,7 @@ const rejectedStatusSchema = baseStatusSchema.extend({
 const revertedStatusSchema = baseStatusSchema.extend({
   data: z.string(),
   message: z.string().optional(),
+  receipt: receiptSchema,
   status: z.literal(GelatoStatusCode.Reverted)
 });
 
