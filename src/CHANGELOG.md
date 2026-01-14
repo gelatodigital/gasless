@@ -1,5 +1,11 @@
 # @gelatocloud/gasless
 
+## 0.0.5
+
+### Patch Changes
+
+- ef5588d: add ability to pass a custom baseUrl
+
 ## 0.0.4
 
 ### Patch Changes
