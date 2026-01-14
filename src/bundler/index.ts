@@ -49,7 +49,7 @@ export const createGelatoBundlerClient = async (
   const { client: client_, payment, apiKey, baseUrl } = parameters;
 
   // TODO: can just use prod endpoint in the future
-  const base = baseUrl ?? (client_.chain.testnet ? GELATO_STAGING_API : GELATO_PROD_API);
+  const base = baseUrl || (client_.chain.testnet ? GELATO_STAGING_API : GELATO_PROD_API);
 
   let endpoint = `${base}/rpc/${client_.chain.id}`;
 
