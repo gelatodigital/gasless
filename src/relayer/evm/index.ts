@@ -63,7 +63,7 @@ export const createGelatoEvmRelayerClient = (
   };
 
   // TODO: can just use prod endpoint in the future
-  const base = baseUrl ?? (testnet ? GELATO_STAGING_API : GELATO_PROD_API);
+  const base = baseUrl || (testnet ? GELATO_STAGING_API : GELATO_PROD_API);
 
   const client = http(`${base}/rpc`, config)({});
 
