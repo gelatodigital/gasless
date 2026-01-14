@@ -30,15 +30,17 @@ export type GelatoSmartAccountClient = Pick<
 export type GelatoSmartAccountClientConfig = {
   apiKey: string;
   account: SmartAccount<GelatoSmartAccountImplementation>;
+  baseUrl?: string;
 };
 
 export const createGelatoSmartAccountClient = async (
   parameters: GelatoSmartAccountClientConfig
 ): Promise<GelatoSmartAccountClient> => {
-  const { account, apiKey } = parameters;
+  const { account, apiKey, baseUrl } = parameters;
 
   const client = createGelatoEvmRelayerClient({
     apiKey,
+    baseUrl,
     testnet: account.chain.testnet ?? false
   });
 

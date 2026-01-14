@@ -45,13 +45,14 @@ export type GelatoEvmRelayerClient = {
 export type GelatoEvmRelayerClientConfig = {
   apiKey: string;
   testnet: boolean;
+  baseUrl?: string;
 };
 
 // TODO: the testnet/mainnet separation won't be necessary in the future
 export const createGelatoEvmRelayerClient = (
   parameters: GelatoEvmRelayerClientConfig
 ): GelatoEvmRelayerClient => {
-  const { apiKey, testnet } = parameters;
+  const { apiKey, testnet, baseUrl } = parameters;
 
   const config: HttpTransportConfig = {
     fetchOptions: {
@@ -62,7 +63,7 @@ export const createGelatoEvmRelayerClient = (
   };
 
   // TODO: can just use prod endpoint in the future
-  const base = testnet ? GELATO_STAGING_API : GELATO_PROD_API;
+  const base = baseUrl ?? (testnet ? GELATO_STAGING_API : GELATO_PROD_API);
 
   const client = http(`${base}/rpc`, config)({});
 
