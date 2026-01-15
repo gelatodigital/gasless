@@ -24,7 +24,8 @@
     "noPropertyAccessFromIndexSignature": true,
 
     "paths": {
-      "@gelatocloud/gasless": ["./src"]
+      "@gelatocloud/gasless": ["./src"],
+      "@gelatocloud/gasless/tron": ["./src/tron"]
     }
   },
   "exclude": ["node_modules", "_dist"]
