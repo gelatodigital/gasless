@@ -345,6 +345,35 @@ enum StatusCode {
 }
 ```
 
+#### ErrorCode
+
+```typescript
+enum ErrorCode {
+  // JSON-RPC
+  ParseError = -32700,
+  InvalidRequest = -32600,
+  MethodNotFound = -32601,
+  InvalidParams = -32602,
+  InternalError = -32603,
+
+  // Relayer
+  Unauthorized = 4100,
+  UnsupportedPaymentToken = 4202,
+  InsufficientPayment = 4200,
+  InsufficientBalance = 4205,
+  UnsupportedChain = 4206,
+  UnknownTransactionId = 4208,
+  InvalidAuthorizationList = 4210,
+  SimulationFailed = 4211,
+
+  // Bundler
+  ValidationFailed = -32500,
+  PaymasterValidationFailed = -32501,
+  InvalidSignature = -32507,
+  ExecutionFailed = -32521
+}
+```
+
 #### PaymentType
 
 ```typescript
