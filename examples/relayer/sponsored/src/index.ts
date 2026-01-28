@@ -1,5 +1,5 @@
+import { resolve } from 'node:path';
 import { config } from 'dotenv';
-import { resolve } from 'path';
 
 // Load root .env first (defaults)
 config({ path: resolve(__dirname, '../../../../.env') });

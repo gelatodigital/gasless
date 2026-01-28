@@ -6,6 +6,7 @@ import {
   encodePacked,
   type JsonRpcAccount,
   type LocalAccount,
+  type PrivateKeyAccount,
   type StateOverride,
   type Transport,
   type TypedDataDefinition
@@ -84,7 +85,7 @@ export const toGelatoSmartAccount = (
   return {
     address: owner.address,
     authorization: {
-      account: undefined as never,
+      account: owner as PrivateKeyAccount,
       address: GELATO_DELEGATION_ADDRESS
     },
     chain: client.chain,
