@@ -1,5 +1,5 @@
+import { resolve } from 'node:path';
 import { config } from 'dotenv';
-import { resolve } from 'path';
 
 // Load root .env first (defaults)
 config({ path: resolve(__dirname, '../../../../.env') });
@@ -7,9 +7,8 @@ config({ path: resolve(__dirname, '../../../../.env') });
 // Load local .env to override (optional)
 config({ override: true });
 
-import { createGelatoBundlerClient, sponsored } from '@gelatocloud/gasless';
-import { toKernelSmartAccount } from 'permissionless/accounts';
-import { createPublicClient, type Hex, http } from 'viem';
+import { createGelatoBundlerClient, sponsored, toGelatoSmartAccount } from '@gelatocloud/gasless';
+import { createPublicClient, type Hex, http, type SignedAuthorization } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { baseSepolia } from 'viem/chains';
 
@@ -30,11 +29,9 @@ const main = async () => {
     transport: http()
   });
 
-  const account = await toKernelSmartAccount({
+  const account = toGelatoSmartAccount({
     client,
-    owners: [owner],
-    useMetaFactory: false,
-    version: '0.3.3'
+    owner
   });
 
   const bundler = await createGelatoBundlerClient({
@@ -45,7 +42,22 @@ const main = async () => {
     pollingInterval: 100
   });
 
+  const deployed = await account.isDeployed();
+
+  let authorization: SignedAuthorization | undefined;
+
+  if (!deployed) {
+    const nonce = await client.getTransactionCount({ address: owner.address });
+
+    authorization = await owner.signAuthorization({
+      address: account.authorization.address,
+      chainId: chain.id,
+      nonce
+    });
+  }
+
   const hash = await bundler.sendUserOperation({
+    authorization,
     calls: [
       {
         data: '0xd09de08a',
