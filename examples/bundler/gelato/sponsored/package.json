@@ -1,0 +1,18 @@
+{
+  "name": "bundler-gelato-sponsored-payment",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@gelatocloud/gasless": "workspace:*",
+    "viem": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "dotenv": "^17.2.3",
+    "tsx": "^4.21.0",
+    "typescript": "catalog:"
+  }
+}
