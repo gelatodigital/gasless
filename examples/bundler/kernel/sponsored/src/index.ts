@@ -58,19 +58,16 @@ const main = async () => {
     });
   }
 
-  const hash = await bundler.sendUserOperation({
+  const { receipt } = await bundler.sendUserOperationSync({
     authorization,
     calls: [
       {
         data: '0xd09de08a',
         to: '0xE27C1359cf02B49acC6474311Bd79d1f10b1f8De'
       }
-    ]
+    ],
+    timeout: 10_000
   });
-
-  console.log(`User operation hash: ${hash}`);
-
-  const { receipt } = await bundler.waitForUserOperationReceipt({ hash });
 
   console.log(`Transaction hash: ${receipt.transactionHash}`);
 
