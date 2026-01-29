@@ -5,7 +5,12 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "ignore": ["bundler-sponsored-payment", "relayer-sponsored-payment", "account-sponsored-payment"],
+  "ignore": [
+    "bundler-gelato-sponsored-payment",
+    "bundler-kernel-sponsored-payment",
+    "relayer-sponsored-payment",
+    "account-sponsored-payment"
+  ],
   "linked": [],
   "updateInternalDependencies": "patch"
 }
