@@ -107,7 +107,7 @@ Sends a sponsored transaction using `sendTransactionSync` which waits for the fi
 ### Step 5: Check Result
 
 ```typescript
-if (result.status === StatusCode.Included) {
+if (result.status === StatusCode.Success) {
   console.log(`Transaction hash: ${result.receipt.transactionHash}`);
 }
 ```

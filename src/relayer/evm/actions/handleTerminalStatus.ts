@@ -2,7 +2,7 @@ import { TransactionRejectedError, TransactionRevertedError } from '../errors/in
 import { StatusCode, type TerminalStatus, type TransactionReceipt } from './getStatus.js';
 
 export const handleTerminalStatus = (id: string, status: TerminalStatus): TransactionReceipt => {
-  if (status.status === StatusCode.Included) {
+  if (status.status === StatusCode.Success) {
     return status.receipt;
   }
 

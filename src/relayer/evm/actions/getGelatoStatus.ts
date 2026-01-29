@@ -5,7 +5,7 @@ import { evmAddressSchema, hexData32Schema, hexDataSchema } from '../../../types
 export enum GelatoStatusCode {
   Pending = 100,
   Submitted = 110,
-  Included = 200,
+  Success = 200,
   Finalized = 210,
   Rejected = 400,
   Reverted = 500
@@ -39,9 +39,9 @@ const submittedStatusSchema = baseStatusSchema.extend({
   status: z.literal(GelatoStatusCode.Submitted)
 });
 
-const includedStatusSchema = baseStatusSchema.extend({
+const successStatusSchema = baseStatusSchema.extend({
   receipt: receiptSchema,
-  status: z.literal(GelatoStatusCode.Included)
+  status: z.literal(GelatoStatusCode.Success)
 });
 
 const finalizedStatusSchema = baseStatusSchema.extend({
@@ -71,7 +71,7 @@ export const gelatoTerminalStatusSchema = z.discriminatedUnion('status', [
 export const gelatoStatusSchema = z.discriminatedUnion('status', [
   pendingStatusSchema,
   submittedStatusSchema,
-  includedStatusSchema,
+  successStatusSchema,
   finalizedStatusSchema,
   rejectedStatusSchema,
   revertedStatusSchema

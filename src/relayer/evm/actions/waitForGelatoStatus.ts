@@ -18,7 +18,7 @@ export const waitForGelatoStatus = async (
     if (
       status.status !== GelatoStatusCode.Pending &&
       status.status !== GelatoStatusCode.Submitted &&
-      status.status !== GelatoStatusCode.Included
+      status.status !== GelatoStatusCode.Success
     ) {
       return status;
     }

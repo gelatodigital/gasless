@@ -4,7 +4,7 @@ import type { GetStatusParameters, TransactionReceipt } from './getStatus.js';
 import { handleTerminalStatus } from './handleTerminalStatus.js';
 import { waitForStatus } from './waitForStatus.js';
 
-export const waitForInclusion = async (
+export const waitForReceipt = async (
   client: ReturnType<Transport>,
   parameters: GetStatusParameters
 ): Promise<TransactionReceipt> => {

@@ -78,12 +78,12 @@ Submits a transaction to Gelato. The `sponsored()` payment type means Gelato cov
 ```typescript
 const status = await relayer.waitForStatus({ id });
 
-if (status.status === StatusCode.Included) {
+if (status.status === StatusCode.Success) {
   console.log(`Transaction hash: ${status.receipt.transactionHash}`);
 }
 ```
 
-Polls until the transaction reaches a final state (Included, Rejected, or Reverted).
+Polls until the transaction reaches a final state (Success, Rejected, or Reverted).
 
 ## Key Concepts
 
@@ -92,4 +92,4 @@ Polls until the transaction reaches a final state (Included, Rejected, or Revert
 | `sponsored()` | Gelato pays gas fees |
 | `sendTransaction` | Async - returns immediately with task ID |
 | `waitForStatus` | Blocks until transaction is finalized |
-| `StatusCode.Included` | Transaction successfully included on-chain |
+| `StatusCode.Success` | Transaction successfully included on-chain |

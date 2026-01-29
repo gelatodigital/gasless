@@ -5,7 +5,7 @@ import { evmAddressSchema, hexData32Schema, hexDataSchema } from '../../../types
 export enum StatusCode {
   Pending = 100,
   Submitted = 110,
-  Included = 200,
+  Success = 200,
   Rejected = 400,
   Reverted = 500
 }
@@ -38,9 +38,9 @@ const submittedStatusSchema = baseStatusSchema.extend({
   status: z.literal(StatusCode.Submitted)
 });
 
-const includedStatusSchema = baseStatusSchema.extend({
+const successStatusSchema = baseStatusSchema.extend({
   receipt: receiptSchema,
-  status: z.literal(StatusCode.Included)
+  status: z.literal(StatusCode.Success)
 });
 
 const rejectedStatusSchema = baseStatusSchema.extend({
@@ -57,13 +57,13 @@ const revertedStatusSchema = baseStatusSchema.extend({
 });
 
 export const terminalStatusSchema = z.discriminatedUnion('status', [
-  includedStatusSchema,
+  successStatusSchema,
   rejectedStatusSchema,
   revertedStatusSchema
 ]);
 
 export const terminalStatusSchemaWithId = z.discriminatedUnion('status', [
-  includedStatusSchema.extend({ id: z.string() }),
+  successStatusSchema.extend({ id: z.string() }),
   rejectedStatusSchema.extend({ id: z.string() }),
   revertedStatusSchema.extend({ id: z.string() })
 ]);
@@ -71,7 +71,7 @@ export const terminalStatusSchemaWithId = z.discriminatedUnion('status', [
 export const statusSchema = z.discriminatedUnion('status', [
   pendingStatusSchema,
   submittedStatusSchema,
-  includedStatusSchema,
+  successStatusSchema,
   rejectedStatusSchema,
   revertedStatusSchema
 ]);
