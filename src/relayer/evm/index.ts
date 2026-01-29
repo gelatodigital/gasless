@@ -44,7 +44,7 @@ export type GelatoEvmRelayerClient = {
 
 export type GelatoEvmRelayerClientConfig = {
   apiKey: string;
-  testnet: boolean;
+  testnet?: boolean;
   baseUrl?: string;
 };
 
