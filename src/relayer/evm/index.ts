@@ -23,7 +23,7 @@ import {
   type TerminalStatus,
   type TransactionReceipt,
   waitForGelatoStatus,
-  waitForInclusion,
+  waitForReceipt,
   waitForStatus
 } from './actions/index.js';
 
@@ -36,7 +36,7 @@ export type GelatoEvmRelayerClient = {
   getGelatoStatus: (parameters: GetGelatoStatusParameters) => Promise<GelatoStatus>;
   getStatus: (parameters: GetStatusParameters) => Promise<Status>;
   waitForGelatoStatus: (parameters: GetGelatoStatusParameters) => Promise<GelatoTerminalStatus>;
-  waitForInclusion: (parameters: GetStatusParameters) => Promise<TransactionReceipt>;
+  waitForReceipt: (parameters: GetStatusParameters) => Promise<TransactionReceipt>;
   waitForStatus: (parameters: GetStatusParameters) => Promise<TerminalStatus>;
   sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
   sendTransactionSync: (parameters: SendTransactionSyncParameters) => Promise<TransactionReceipt>;
@@ -44,7 +44,7 @@ export type GelatoEvmRelayerClient = {
 
 export type GelatoEvmRelayerClientConfig = {
   apiKey: string;
-  testnet: boolean;
+  testnet?: boolean;
   baseUrl?: string;
 };
 
@@ -76,7 +76,7 @@ export const createGelatoEvmRelayerClient = (
     sendTransaction: (parameters) => sendTransaction(client, parameters),
     sendTransactionSync: (parameters) => sendTransactionSync(client, parameters),
     waitForGelatoStatus: (parameters) => waitForGelatoStatus(client, parameters),
-    waitForInclusion: (parameters) => waitForInclusion(client, parameters),
+    waitForReceipt: (parameters) => waitForReceipt(client, parameters),
     waitForStatus: (parameters) => waitForStatus(client, parameters)
   };
 };
