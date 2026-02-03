@@ -1,10 +1,9 @@
-import type { Hex } from 'viem';
+import type { Hex, TransactionReceipt } from 'viem';
 import type { SmartAccount } from 'viem/account-abstraction';
 import {
   createGelatoEvmRelayerClient,
   type FeeQuote,
-  type GelatoEvmRelayerClient,
-  type TransactionReceipt
+  type GelatoEvmRelayerClient
 } from '../relayer/index.js';
 import {
   type GetFeeQuoteParameters,

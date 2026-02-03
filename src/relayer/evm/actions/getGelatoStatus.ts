@@ -1,6 +1,6 @@
-import type { Transport } from 'viem';
+import type { TransactionReceipt, Transport } from 'viem';
 import { z } from 'zod';
-import { baseStatusSchema, hexData32Schema, receiptSchema } from '../../../types/index.js';
+import { baseStatusSchema, hexData32Schema } from '../../../types/index.js';
 
 export enum GelatoStatusCode {
   Pending = 100,
@@ -21,12 +21,12 @@ const submittedStatusSchema = baseStatusSchema.extend({
 });
 
 const successStatusSchema = baseStatusSchema.extend({
-  receipt: receiptSchema,
+  receipt: z.custom<TransactionReceipt>(),
   status: z.literal(GelatoStatusCode.Success)
 });
 
 const finalizedStatusSchema = baseStatusSchema.extend({
-  receipt: receiptSchema,
+  receipt: z.custom<TransactionReceipt>(),
   status: z.literal(GelatoStatusCode.Finalized)
 });
 
@@ -39,7 +39,7 @@ const rejectedStatusSchema = baseStatusSchema.extend({
 const revertedStatusSchema = baseStatusSchema.extend({
   data: z.string(),
   message: z.string().optional(),
-  receipt: receiptSchema,
+  receipt: z.custom<TransactionReceipt>(),
   status: z.literal(GelatoStatusCode.Reverted)
 });
 

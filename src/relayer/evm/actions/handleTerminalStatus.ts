@@ -1,5 +1,6 @@
+import type { TransactionReceipt } from 'viem';
 import { TransactionRejectedError, TransactionRevertedError } from '../errors/index.js';
-import { StatusCode, type TerminalStatus, type TransactionReceipt } from './getStatus.js';
+import { StatusCode, type TerminalStatus } from './getStatus.js';
 
 export const handleTerminalStatus = (id: string, status: TerminalStatus): TransactionReceipt => {
   if (status.status === StatusCode.Success) {

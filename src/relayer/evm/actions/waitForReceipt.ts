@@ -1,6 +1,5 @@
-import type { Transport } from 'viem';
+import type { TransactionReceipt, Transport } from 'viem';
 
-import type { TransactionReceipt } from './getStatus.js';
 import { handleTerminalStatus } from './handleTerminalStatus.js';
 import { type WaitForStatusParameters, waitForStatus } from './waitForStatus.js';
 

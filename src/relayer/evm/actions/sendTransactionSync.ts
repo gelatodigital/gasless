@@ -1,6 +1,6 @@
-import type { Transport } from 'viem';
+import type { TransactionReceipt, Transport } from 'viem';
 import { formatAuthorization, retrieveIdFromError } from '../../../utils/index.js';
-import { type TransactionReceipt, terminalStatusSchemaWithId } from './getStatus.js';
+import { terminalStatusSchemaWithId } from './getStatus.js';
 import { handleTerminalStatus } from './handleTerminalStatus.js';
 import type { SendTransactionParameters } from './sendTransaction.js';
 import { waitForReceipt } from './waitForReceipt.js';

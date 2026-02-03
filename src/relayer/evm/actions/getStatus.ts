@@ -1,14 +1,6 @@
-import type { Transport } from 'viem';
+import type { TransactionReceipt, Transport } from 'viem';
 import { z } from 'zod';
-import {
-  baseStatusSchema,
-  hexData32Schema,
-  receiptSchema,
-  type TransactionReceipt
-} from '../../../types/index.js';
-
-// Re-export TransactionReceipt for backwards compatibility
-export type { TransactionReceipt };
+import { baseStatusSchema, hexData32Schema } from '../../../types/index.js';
 
 export enum StatusCode {
   Pending = 100,
@@ -28,7 +20,7 @@ const submittedStatusSchema = baseStatusSchema.extend({
 });
 
 const successStatusSchema = baseStatusSchema.extend({
-  receipt: receiptSchema,
+  receipt: z.custom<TransactionReceipt>(),
   status: z.literal(StatusCode.Success)
 });
 
@@ -41,7 +33,7 @@ const rejectedStatusSchema = baseStatusSchema.extend({
 const revertedStatusSchema = baseStatusSchema.extend({
   data: z.string(),
   message: z.string().optional(),
-  receipt: receiptSchema,
+  receipt: z.custom<TransactionReceipt>(),
   status: z.literal(StatusCode.Reverted)
 });
 
