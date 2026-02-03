@@ -7,7 +7,7 @@ config({ path: resolve(__dirname, '../../../../.env') });
 // Load local .env to override (optional)
 config({ override: true });
 
-import { createGelatoBundlerClient, sponsored, toGelatoSmartAccount } from '@gelatocloud/gasless';
+import { createGelatoBundlerClient, toGelatoSmartAccount } from '@gelatocloud/gasless';
 import { createPublicClient, type Hex, http, type SignedAuthorization } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { baseSepolia } from 'viem/chains';
@@ -38,7 +38,8 @@ const main = async () => {
     account,
     apiKey: GELATO_API_KEY,
     client,
-    pollingInterval: 100
+    pollingInterval: 100,
+    sponsored: true
   });
 
   const deployed = await account.isDeployed();

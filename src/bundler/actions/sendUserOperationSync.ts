@@ -11,8 +11,7 @@ import {
   waitForUserOperationReceipt
 } from 'viem/account-abstraction';
 import { parseAccount } from 'viem/accounts';
-import type { CapabilitiesByChain } from '../../relayer/evm/actions/index.js';
-import { AccountNotFoundError, type Payment } from '../../types/index.js';
+import { AccountNotFoundError } from '../../types/index.js';
 import { retrieveIdFromError } from '../../utils/index.js';
 import { prepareUserOperation } from './prepareUserOperation.js';
 
@@ -23,8 +22,7 @@ export type SendUserOperationSyncParameters = SendUserOperationParameters & {
 export const sendUserOperationSync = async <account extends SmartAccount | undefined>(
   client: Client<Transport, Chain | undefined, account>,
   parameters: SendUserOperationSyncParameters,
-  capabilities: CapabilitiesByChain,
-  payment?: Payment
+  sponsored: boolean
 ): Promise<UserOperationReceipt> => {
   const { account: account_ = client.account, entryPointAddress, timeout } = parameters;
 
@@ -35,9 +33,7 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
     ? await prepareUserOperation(
         client,
         parameters as unknown as PrepareUserOperationParameters,
-        capabilities,
-        payment,
-        true
+        sponsored
       )
     : parameters;
 

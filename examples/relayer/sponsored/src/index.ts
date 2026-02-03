@@ -2,12 +2,12 @@ import { resolve } from 'node:path';
 import { config } from 'dotenv';
 
 // Load root .env first (defaults)
-config({ path: resolve(__dirname, '../../../../.env') });
+config({ path: resolve(__dirname, '../../../../.env'), quiet: true });
 
 // Load local .env to override (optional)
-config({ override: true });
+config({ override: true, quiet: true });
 
-import { createGelatoEvmRelayerClient, sponsored } from '@gelatocloud/gasless';
+import { createGelatoEvmRelayerClient } from '@gelatocloud/gasless';
 import { baseSepolia } from 'viem/chains';
 
 const GELATO_API_KEY = process.env['GELATO_API_KEY'];
@@ -24,7 +24,6 @@ const main = async () => {
   const receipt = await relayer.sendTransactionSync({
     chainId: chain.id,
     data: '0xd09de08a',
-    payment: sponsored(),
     to: '0xE27C1359cf02B49acC6474311Bd79d1f10b1f8De'
   });
 

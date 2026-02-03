@@ -52,11 +52,10 @@ export const createGelatoSmartAccountClient = async (
 
   return {
     getCapabilities: () => client.getCapabilities(),
-    getFeeQuote: (parameters) => getFeeQuote(client, account, capabilities, parameters),
+    getFeeQuote: (parameters) => getFeeQuote(client, account, parameters),
     getStatus: (parameters) => client.getStatus(parameters),
-    sendTransaction: (parameters) => sendTransaction(client, account, capabilities, parameters),
-    sendTransactionSync: (parameters) =>
-      sendTransactionSync(client, account, capabilities, parameters),
+    sendTransaction: (parameters) => sendTransaction(client, account, parameters),
+    sendTransactionSync: (parameters) => sendTransactionSync(client, account, parameters),
     waitForReceipt: (parameters) => client.waitForReceipt(parameters),
     waitForStatus: (parameters) => client.waitForStatus(parameters)
   };

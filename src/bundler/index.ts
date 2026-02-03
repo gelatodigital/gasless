@@ -8,7 +8,6 @@ import {
 } from 'viem/account-abstraction';
 import { GELATO_PROD_API, GELATO_STAGING_API } from '../constants/index.js';
 import { getCapabilities } from '../relayer/evm/actions/index.js';
-import { type Payment, PaymentType } from '../types/index.js';
 import {
   estimateUserOperationGas,
   type GetUserOperationGasPriceReturnType,
@@ -38,7 +37,10 @@ export type GelatoBundlerClient = BundlerClient & GelatoBundlerActions;
 
 export type GelatoBundlerClientConfig = Omit<BundlerClientConfig, 'transport' | 'userOperation'> & {
   client: Client<Transport, Chain>;
-  payment?: Payment;
+  /**
+   * Whether to use sponsored payment via Gas Tank
+   */
+  sponsored: boolean;
   apiKey: string;
   baseUrl?: string;
 };
@@ -46,18 +48,14 @@ export type GelatoBundlerClientConfig = Omit<BundlerClientConfig, 'transport' | 
 export const createGelatoBundlerClient = async (
   parameters: GelatoBundlerClientConfig
 ): Promise<GelatoBundlerClient> => {
-  const { client: client_, payment, apiKey, baseUrl } = parameters;
+  const { client: client_, sponsored, apiKey, baseUrl } = parameters;
 
   const base = baseUrl || (client_.chain.testnet ? GELATO_STAGING_API : GELATO_PROD_API);
 
   let endpoint = `${base}/rpc/${client_.chain.id}`;
 
-  if (payment) {
-    endpoint += `?payment=${payment.type}`;
-
-    if (payment.type === PaymentType.Token) {
-      endpoint += `&address=${payment.address}`;
-    }
+  if (sponsored && !endpoint.includes('payment=sponsored')) {
+    endpoint += `?payment=sponsored`;
   }
 
   const transport = http(endpoint, {
@@ -83,16 +81,12 @@ export const createGelatoBundlerClient = async (
     (client) =>
       ({
         estimateUserOperationGas: (parameters) =>
-          estimateUserOperationGas(client, parameters, capabilities, payment),
-        getUserOperationGasPrice: () => getUserOperationGasPrice(client, payment),
-        getUserOperationQuote: (parameters) =>
-          getUserOperationQuote(client, parameters, capabilities, payment),
-        prepareUserOperation: (parameters) =>
-          prepareUserOperation(client, parameters, capabilities, payment),
-        sendUserOperation: (parameters) =>
-          sendUserOperation(client, parameters, capabilities, payment),
-        sendUserOperationSync: (parameters) =>
-          sendUserOperationSync(client, parameters, capabilities, payment)
+          estimateUserOperationGas(client, parameters, sponsored),
+        getUserOperationGasPrice: () => getUserOperationGasPrice(client, sponsored),
+        getUserOperationQuote: (parameters) => getUserOperationQuote(client, parameters, sponsored),
+        prepareUserOperation: (parameters) => prepareUserOperation(client, parameters, sponsored),
+        sendUserOperation: (parameters) => sendUserOperation(client, parameters, sponsored),
+        sendUserOperationSync: (parameters) => sendUserOperationSync(client, parameters, sponsored)
       }) as GelatoBundlerActions
   ) as unknown as GelatoBundlerClient;
 };
