@@ -301,16 +301,13 @@ const client = await createGelatoSmartAccountClient({
 
 **Polling Configuration:**
 
-All synchronous methods (`sendTransactionSync`, `waitForStatus`, `waitForReceipt`) support customizable polling behavior:
+All synchronous methods (`sendTransactionSync`, `sendUserOperationSync`, `waitForStatus`, `waitForReceipt`) support customizable polling behavior:
 
 - `timeout` (optional): Maximum wait time in milliseconds
-  - Default for relayer: `10000` (10 seconds)
-  - Default for Gelato status: `120000` (2 minutes)
+  - Default: `120000` (2 minutes)
   - Must not exceed `600000` (10 minutes)
 - `pollingInterval` (optional): Frequency to check status in milliseconds
-  - Default for relayer: `100` (100ms)
-  - Default for Gelato status: `10000` (10 seconds)
-  - Must be between `100` and `300000` (5 minutes)
+  - Default: `1000` (1 second)
 
 **Example:**
 ```typescript
@@ -348,7 +345,7 @@ const bundler = await createGelatoBundlerClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendUserOperation` | `{ calls }` | `Promise<Hex>` | Send a user operation |
-| `sendUserOperationSync` | `{ calls, timeout }` | `Promise<UserOperationReceipt>` | Send and wait for receipt |
+| `sendUserOperationSync` | `{ calls, timeout?, pollingInterval? }` | `Promise<UserOperationReceipt>` | Send and wait for receipt |
 | `waitForUserOperationReceipt` | `{ hash }` | `Promise<{ receipt }>` | Wait for receipt |
 | `estimateUserOperationGas` | `UserOperationParams` | `Promise<GasEstimate>` | Estimate gas |
 | `prepareUserOperation` | `UserOperationParams` | `Promise<UserOperation>` | Prepare operation |
@@ -467,12 +464,23 @@ try {
 }
 ```
 
+### Automatic Fallback on Timeout
+
+When `sendTransactionSync` times out, it automatically falls back to polling for the transaction status. If you see a warning message like:
+
+```
+Transaction 0x... sync call timed out, falling back to polling for completion. DO NOT RETRY this transaction.
+```
+
+This means your transaction was successfully submitted but the sync method timed out. The SDK will continue polling for completion automatically. **Do not retry the operation** as this could result in duplicate transactions.
+
 ### Recovery Strategies
 
 If a timeout occurs:
-1. **Check status manually**: Use `getStatus({ id })` to check if transaction is still processing
-2. **Retry with longer timeout**: Increase `timeout` and call `waitForStatus` again
-3. **Use async methods**: Switch to async pattern for more control
+1. **Wait for automatic fallback**: `sendTransactionSync` automatically polls after timeout
+2. **Check status manually**: Use `getStatus({ id })` to check if transaction is still processing
+3. **Retry with longer timeout**: Increase `timeout` and call `waitForStatus` again
+4. **Use async methods**: Switch to async pattern for more control
 
 ```typescript
 try {
@@ -499,6 +507,42 @@ try {
     console.log('Transaction completed:', status);
   }
 }
+```
+
+### Configuration Limits
+
+The SDK enforces the following limits to prevent denial of service:
+
+```typescript
+import {
+  MIN_TIMEOUT,
+  MAX_TIMEOUT,
+  MIN_POLLING_INTERVAL,
+  MAX_POLLING_INTERVAL
+} from '@gelatocloud/gasless';
+
+console.log(MIN_TIMEOUT); // 1000ms (1 second)
+console.log(MAX_TIMEOUT); // 600000ms (10 minutes)
+console.log(MIN_POLLING_INTERVAL); // 100ms
+console.log(MAX_POLLING_INTERVAL); // 300000ms (5 minutes)
+```
+
+You can set default timeout and polling interval at the client level:
+
+```typescript
+const relayer = createGelatoEvmRelayerClient({
+  apiKey: process.env.GELATO_API_KEY,
+  timeout: 30000, // Default 30 second timeout
+  pollingInterval: 500 // Default 500ms polling interval
+});
+
+// Methods use client defaults unless overridden
+const receipt = await relayer.sendTransactionSync({
+  chainId: baseSepolia.id,
+  to: '0xTargetContract...',
+  data: '0xCalldata...',
+  // timeout: 60000 // Optional: override client default
+});
 ```
 
 ## Requirements

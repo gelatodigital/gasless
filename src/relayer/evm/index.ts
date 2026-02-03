@@ -51,7 +51,7 @@ export type GelatoEvmRelayerClientConfig = {
 export const createGelatoEvmRelayerClient = (
   parameters: GelatoEvmRelayerClientConfig
 ): GelatoEvmRelayerClient => {
-  const { apiKey, testnet, baseUrl } = parameters;
+  const { apiKey, testnet, baseUrl, timeout, pollingInterval } = parameters;
 
   const config: HttpTransportConfig = {
     fetchOptions: {
@@ -72,8 +72,23 @@ export const createGelatoEvmRelayerClient = (
     getGelatoStatus: (parameters) => getGelatoStatus(client, parameters),
     getStatus: (parameters) => getStatus(client, parameters),
     sendTransaction: (parameters) => sendTransaction(client, parameters),
-    sendTransactionSync: (parameters) => sendTransactionSync(client, parameters),
-    waitForReceipt: (parameters) => waitForReceipt(client, parameters),
-    waitForStatus: (parameters) => waitForStatus(client, parameters)
+    sendTransactionSync: (params) =>
+      sendTransactionSync(client, {
+        ...params,
+        pollingInterval: params.pollingInterval ?? pollingInterval,
+        timeout: params.timeout ?? timeout
+      }),
+    waitForReceipt: (params) =>
+      waitForReceipt(client, {
+        ...params,
+        pollingInterval: params.pollingInterval ?? pollingInterval,
+        timeout: params.timeout ?? timeout
+      }),
+    waitForStatus: (params) =>
+      waitForStatus(client, {
+        ...params,
+        pollingInterval: params.pollingInterval ?? pollingInterval,
+        timeout: params.timeout ?? timeout
+      })
   };
 };

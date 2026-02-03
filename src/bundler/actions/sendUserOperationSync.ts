@@ -16,7 +16,9 @@ import { retrieveIdFromError } from '../../utils/index.js';
 import { prepareUserOperation } from './prepareUserOperation.js';
 
 export type SendUserOperationSyncParameters = SendUserOperationParameters & {
-  timeout: number;
+  timeout?: number;
+  requestTimeout?: number;
+  pollingInterval?: number;
 };
 
 export const sendUserOperationSync = async <account extends SmartAccount | undefined>(
@@ -24,7 +26,13 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
   parameters: SendUserOperationSyncParameters,
   sponsored: boolean
 ): Promise<UserOperationReceipt> => {
-  const { account: account_ = client.account, entryPointAddress, timeout } = parameters;
+  const {
+    account: account_ = client.account,
+    entryPointAddress,
+    timeout = 120000,
+    requestTimeout,
+    pollingInterval = client.pollingInterval
+  } = parameters;
 
   if (!account_ && !parameters.sender) throw new AccountNotFoundError();
   const account = account_ ? parseAccount(account_) : undefined;
@@ -50,8 +58,12 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
     const receipt = await client.request(
       {
         method: 'eth_sendUserOperationSync',
-        // biome-ignore lint/style/noNonNullAssertion: copied from viem
-        params: [rpcParameters, (entryPointAddress ?? account?.entryPoint?.address)!, { timeout }]
+        params: [
+          rpcParameters,
+          // biome-ignore lint/style/noNonNullAssertion: copied from viem
+          (entryPointAddress ?? account?.entryPoint?.address)!,
+          { timeout: requestTimeout }
+        ]
       } as never,
       { retryCount: 0 }
     );
@@ -60,7 +72,7 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
   } catch (error) {
     const id = retrieveIdFromError(error);
     if (id) {
-      return waitForUserOperationReceipt(client, { hash: id });
+      return waitForUserOperationReceipt(client, { hash: id, pollingInterval, timeout });
     }
 
     // biome-ignore lint/suspicious/noExplicitAny: copied from viem

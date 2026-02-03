@@ -11,6 +11,7 @@ export class TimeoutError extends Error {
 // Validation constants for polling parameters
 export const MIN_POLLING_INTERVAL = 100; // 100ms minimum
 export const MAX_POLLING_INTERVAL = 300000; // 5 minutes maximum
+export const MIN_TIMEOUT = 1000; // 1 second minimum
 export const MAX_TIMEOUT = 600000; // 10 minutes maximum
 
 /**
@@ -92,18 +93,25 @@ export async function withTimeout<T>(
     timeoutErrorMessage = 'Timeout waiting for result'
   } = options;
 
-  // Input validation to prevent DoS attacks
+  // Input validation to prevent DoS attacks and type confusion
+  if (!Number.isFinite(pollingInterval) || !Number.isInteger(pollingInterval)) {
+    throw new Error('pollingInterval must be a finite integer');
+  }
   if (pollingInterval < MIN_POLLING_INTERVAL) {
     throw new Error(`pollingInterval must be at least ${MIN_POLLING_INTERVAL}ms`);
   }
   if (pollingInterval > MAX_POLLING_INTERVAL) {
     throw new Error(`pollingInterval cannot exceed ${MAX_POLLING_INTERVAL}ms`);
   }
+
+  if (!Number.isFinite(timeout) || !Number.isInteger(timeout)) {
+    throw new Error('timeout must be a finite integer');
+  }
+  if (timeout < MIN_TIMEOUT) {
+    throw new Error(`timeout must be at least ${MIN_TIMEOUT}ms`);
+  }
   if (timeout > MAX_TIMEOUT) {
     throw new Error(`timeout cannot exceed ${MAX_TIMEOUT}ms`);
-  }
-  if (timeout < 0) {
-    throw new Error('timeout must be non-negative');
   }
 
   const startTime = Date.now();

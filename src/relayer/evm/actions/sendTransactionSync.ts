@@ -7,28 +7,33 @@ import { waitForReceipt } from './waitForReceipt.js';
 
 export type SendTransactionSyncParameters = SendTransactionParameters & {
   timeout?: number;
+  requestTimeout?: number;
+  pollingInterval?: number;
 };
 
 export const sendTransactionSync = async (
   client: ReturnType<Transport>,
   parameters: SendTransactionSyncParameters
 ): Promise<TransactionReceipt> => {
-  const { chainId, data, to, context, authorizationList, timeout } = parameters;
+  const { chainId, data, to, context, authorizationList, timeout, requestTimeout } = parameters;
 
   try {
-    const result = await client.request({
-      method: 'relayer_sendTransactionSync',
-      params: {
-        authorizationList: authorizationList
-          ? authorizationList.map(formatAuthorization)
-          : undefined,
-        chainId: chainId.toString(),
-        context,
-        data,
-        timeout,
-        to
-      }
-    });
+    const result = await client.request(
+      {
+        method: 'relayer_sendTransactionSync',
+        params: {
+          authorizationList: authorizationList
+            ? authorizationList.map(formatAuthorization)
+            : undefined,
+          chainId: chainId.toString(),
+          context,
+          data,
+          timeout: requestTimeout,
+          to
+        }
+      },
+      { retryCount: 0 }
+    );
 
     const output = terminalStatusSchemaWithId.parse(result);
 
@@ -36,8 +41,9 @@ export const sendTransactionSync = async (
   } catch (error) {
     const id = retrieveIdFromError(error);
     if (id) {
-      return waitForReceipt(client, { id });
+      return waitForReceipt(client, { id, pollingInterval: parameters.pollingInterval, timeout });
     }
+
     throw error;
   }
 };

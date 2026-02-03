@@ -322,7 +322,7 @@ const bundler = await createGelatoBundlerClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendUserOperation` | `{ calls }` | `Promise<Hex>` | Send a user operation |
-| `sendUserOperationSync` | `{ calls, timeout }` | `Promise<UserOperationReceipt>` | Send and wait for receipt |
+| `sendUserOperationSync` | `{ calls, timeout?, pollingInterval? }` | `Promise<UserOperationReceipt>` | Send and wait for receipt |
 | `waitForUserOperationReceipt` | `{ hash }` | `Promise<{ receipt }>` | Wait for receipt |
 | `estimateUserOperationGas` | `UserOperationParams` | `Promise<GasEstimate>` | Estimate gas |
 | `prepareUserOperation` | `UserOperationParams` | `Promise<UserOperation>` | Prepare operation |

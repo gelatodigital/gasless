@@ -16,7 +16,7 @@ export const waitForStatus = async (
   client: ReturnType<Transport>,
   parameters: WaitForStatusParameters
 ): Promise<TerminalStatus> => {
-  const { timeout = 10000, pollingInterval = 100 } = parameters;
+  const { timeout = 120000, pollingInterval = 1000 } = parameters;
 
   const result = await withTimeout(() => getStatus(client, parameters), {
     pollingInterval,
