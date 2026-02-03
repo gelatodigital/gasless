@@ -1,9 +1,20 @@
 import type { TransactionReceipt, Transport } from 'viem';
+import { z } from 'zod';
+import {
+  rejectedStatusSchema,
+  revertedStatusSchema,
+  successStatusSchema
+} from '../../../types/schema.js';
 import { formatAuthorization, retrieveIdFromError } from '../../../utils/index.js';
-import { terminalStatusSchemaWithId } from './getStatus.js';
 import { handleTerminalStatus } from './handleTerminalStatus.js';
 import type { SendTransactionParameters } from './sendTransaction.js';
 import { waitForReceipt } from './waitForReceipt.js';
+
+export const terminalStatusSchemaWithId = z.discriminatedUnion('status', [
+  successStatusSchema.extend({ id: z.string() }),
+  rejectedStatusSchema.extend({ id: z.string() }),
+  revertedStatusSchema.extend({ id: z.string() })
+]);
 
 export type SendTransactionSyncParameters = SendTransactionParameters & {
   timeout?: number;

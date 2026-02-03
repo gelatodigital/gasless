@@ -1,11 +1,7 @@
 import type { Transport } from 'viem';
+import { StatusCode, type TerminalStatus, terminalStatusSchema } from '../../../types/schema.js';
 import { withTimeout } from '../../../utils/withTimeout.js';
-import {
-  type GetStatusParameters,
-  getStatus,
-  StatusCode,
-  type TerminalStatus
-} from './getStatus.js';
+import { type GetStatusParameters, getStatus } from './getStatus.js';
 
 export type WaitForStatusParameters = GetStatusParameters & {
   timeout?: number;
@@ -33,6 +29,5 @@ export const waitForStatus = async (
     );
   }
 
-  // TypeScript now understands the discriminated union narrowing
-  return result;
+  return terminalStatusSchema.parse(result);
 };
