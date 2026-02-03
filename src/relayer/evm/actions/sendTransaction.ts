@@ -1,5 +1,5 @@
 import type { Address, Hex, SignedAuthorizationList, Transport } from 'viem';
-import { hexData32Schema, type Payment } from '../../../types/index.js';
+import { hexData32Schema, type Payment, sponsored } from '../../../types/index.js';
 import { formatAuthorization } from '../../../utils/index.js';
 
 export type SendTransactionParameters = {
@@ -7,7 +7,7 @@ export type SendTransactionParameters = {
   chainId: number;
   context?: unknown;
   data: Hex;
-  payment: Payment;
+  payment?: Payment;
   to: Address;
 };
 
@@ -24,7 +24,7 @@ export const sendTransaction = async (
       chainId: chainId.toString(),
       context,
       data,
-      payment,
+      payment: payment ?? sponsored(),
       to
     }
   });

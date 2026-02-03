@@ -7,11 +7,13 @@ import {
   type SendUserOperationParameters,
   type SmartAccount,
   type UserOperation,
-  type UserOperationReceipt
+  type UserOperationReceipt,
+  waitForUserOperationReceipt
 } from 'viem/account-abstraction';
 import { parseAccount } from 'viem/accounts';
 import type { CapabilitiesByChain } from '../../relayer/evm/actions/index.js';
 import { AccountNotFoundError, type Payment } from '../../types/index.js';
+import { retrieveIdFromError } from '../../utils/index.js';
 import { prepareUserOperation } from './prepareUserOperation.js';
 
 export type SendUserOperationSyncParameters = SendUserOperationParameters & {
@@ -60,6 +62,11 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
 
     return formatUserOperationReceipt(receipt);
   } catch (error) {
+    const id = retrieveIdFromError(error);
+    if (id) {
+      return waitForUserOperationReceipt(client, { hash: id });
+    }
+
     // biome-ignore lint/suspicious/noExplicitAny: copied from viem
     const calls = (parameters as any).calls;
     throw getUserOperationError(error as BaseError, {

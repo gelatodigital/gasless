@@ -5,7 +5,6 @@ import {
   type FeeData,
   type FeeQuote,
   type GelatoStatus,
-  type GelatoTerminalStatus,
   type GetFeeDataParameters,
   type GetFeeQuoteParameters,
   type GetGelatoStatusParameters,
@@ -22,7 +21,7 @@ import {
   sendTransactionSync,
   type TerminalStatus,
   type TransactionReceipt,
-  waitForGelatoStatus,
+  type WaitForStatusParameters,
   waitForReceipt,
   waitForStatus
 } from './actions/index.js';
@@ -35,20 +34,20 @@ export type GelatoEvmRelayerClient = {
   getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
   getGelatoStatus: (parameters: GetGelatoStatusParameters) => Promise<GelatoStatus>;
   getStatus: (parameters: GetStatusParameters) => Promise<Status>;
-  waitForGelatoStatus: (parameters: GetGelatoStatusParameters) => Promise<GelatoTerminalStatus>;
-  waitForReceipt: (parameters: GetStatusParameters) => Promise<TransactionReceipt>;
-  waitForStatus: (parameters: GetStatusParameters) => Promise<TerminalStatus>;
+  waitForReceipt: (parameters: WaitForStatusParameters) => Promise<TransactionReceipt>;
+  waitForStatus: (parameters: WaitForStatusParameters) => Promise<TerminalStatus>;
   sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
   sendTransactionSync: (parameters: SendTransactionSyncParameters) => Promise<TransactionReceipt>;
 };
 
 export type GelatoEvmRelayerClientConfig = {
   apiKey: string;
+  pollingInterval?: number;
+  timeout?: number;
   testnet?: boolean;
   baseUrl?: string;
 };
 
-// TODO: the testnet/mainnet separation won't be necessary in the future
 export const createGelatoEvmRelayerClient = (
   parameters: GelatoEvmRelayerClientConfig
 ): GelatoEvmRelayerClient => {
@@ -62,7 +61,6 @@ export const createGelatoEvmRelayerClient = (
     }
   };
 
-  // TODO: can just use prod endpoint in the future
   const base = baseUrl || (testnet ? GELATO_STAGING_API : GELATO_PROD_API);
 
   const client = http(`${base}/rpc`, config)({});
@@ -75,7 +73,6 @@ export const createGelatoEvmRelayerClient = (
     getStatus: (parameters) => getStatus(client, parameters),
     sendTransaction: (parameters) => sendTransaction(client, parameters),
     sendTransactionSync: (parameters) => sendTransactionSync(client, parameters),
-    waitForGelatoStatus: (parameters) => waitForGelatoStatus(client, parameters),
     waitForReceipt: (parameters) => waitForReceipt(client, parameters),
     waitForStatus: (parameters) => waitForStatus(client, parameters)
   };

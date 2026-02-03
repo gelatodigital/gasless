@@ -7,11 +7,7 @@ config({ path: resolve(__dirname, '../../../../.env') });
 // Load local .env to override (optional)
 config({ override: true });
 
-import {
-  createGelatoSmartAccountClient,
-  sponsored,
-  toGelatoSmartAccount
-} from '@gelatocloud/gasless';
+import { createGelatoSmartAccountClient, toGelatoSmartAccount } from '@gelatocloud/gasless';
 import { createPublicClient, type Hex, http } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { baseSepolia } from 'viem/chains';
@@ -65,10 +61,11 @@ const main = async () => {
     /**
      * (Optional) Here you may specify a nonce or nonceKey
      */
-    nonce: encodeNonce(BigInt(Date.now()), 0n),
-    payment: sponsored()
+    nonce: encodeNonce(BigInt(Date.now()), 0n)
   });
+
   console.log(`Transaction hash: ${receipt.transactionHash}`);
+
   process.exit(0);
 };
 

@@ -1,4 +1,5 @@
 import type { Transport } from 'viem';
+import { withTimeout } from '../../../utils/withTimeout.js';
 import {
   type GetStatusParameters,
   getStatus,
@@ -6,19 +7,32 @@ import {
   type TerminalStatus
 } from './getStatus.js';
 
-// TODO: use websockets
-// TODO: make polling interval configurable
+export type WaitForStatusParameters = GetStatusParameters & {
+  timeout?: number;
+  pollingInterval?: number;
+};
+
 export const waitForStatus = async (
   client: ReturnType<Transport>,
-  parameters: GetStatusParameters
+  parameters: WaitForStatusParameters
 ): Promise<TerminalStatus> => {
-  while (true) {
-    const status = await getStatus(client, parameters);
+  const { timeout = 10000, pollingInterval = 100 } = parameters;
 
-    if (status.status !== StatusCode.Pending && status.status !== StatusCode.Submitted) {
-      return status;
-    }
+  const result = await withTimeout(() => getStatus(client, parameters), {
+    pollingInterval,
+    shouldContinue: (status) =>
+      status.status === StatusCode.Pending || status.status === StatusCode.Submitted,
+    timeout,
+    timeoutErrorMessage: `Timeout waiting for status for transaction ${parameters.id}`
+  });
 
-    await new Promise((r) => setTimeout(r, 100));
+  // Runtime validation instead of unsafe type assertion
+  if (result.status === StatusCode.Pending || result.status === StatusCode.Submitted) {
+    throw new Error(
+      `Internal error: withTimeout returned non-terminal status ${result.status} for transaction ${parameters.id}`
+    );
   }
+
+  // TypeScript now understands the discriminated union narrowing
+  return result;
 };

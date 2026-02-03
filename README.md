@@ -249,10 +249,10 @@ const client = createGelatoEvmRelayerClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendTransaction` | `{ chainId, to, data, payment, authorizationList?, context? }` | `Promise<Hex>` | Submit a transaction |
-| `sendTransactionSync` | `{ chainId, to, data, payment, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
+| `sendTransactionSync` | `{ chainId, to, data, payment, timeout?, pollingInterval?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
-| `waitForStatus` | `{ id: string }` | `Promise<TerminalStatus>` | Wait for final status |
-| `waitForReceipt` | `{ id: string }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
+| `waitForStatus` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TerminalStatus>` | Wait for final status |
+| `waitForReceipt` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 | `getFeeData` | `{ chainId, gas, l1Fee? }` | `Promise<FeeData>` | Get network fee data |
 | `getFeeQuote` | `{ chainId, gas, token, l1Fee? }` | `Promise<FeeQuote>` | Get fee quote for token payment |
@@ -288,16 +288,42 @@ const client = await createGelatoSmartAccountClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendTransaction` | `{ calls, payment, nonce?, nonceKey?, quote? }` | `Promise<Hex>` | Send transaction(s) |
-| `sendTransactionSync` | `{ calls, payment, nonce?, nonceKey?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
+| `sendTransactionSync` | `{ calls, payment, nonce?, nonceKey?, timeout?, pollingInterval?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getFeeQuote` | `{ calls, payment }` | `Promise<FeeQuote>` | Get fee quote |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
-| `waitForStatus` | `{ id: string }` | `Promise<TerminalStatus>` | Wait for final status |
-| `waitForReceipt` | `{ id: string }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
+| `waitForStatus` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TerminalStatus>` | Wait for final status |
+| `waitForReceipt` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 
 **Nonce Options:**
 - `nonce`: Explicit nonce value
 - `nonceKey`: Key for 2D nonce (allows parallel transactions)
+
+**Polling Configuration:**
+
+All synchronous methods (`sendTransactionSync`, `waitForStatus`, `waitForReceipt`) support customizable polling behavior:
+
+- `timeout` (optional): Maximum wait time in milliseconds
+  - Default for relayer: `10000` (10 seconds)
+  - Default for Gelato status: `120000` (2 minutes)
+  - Must not exceed `600000` (10 minutes)
+- `pollingInterval` (optional): Frequency to check status in milliseconds
+  - Default for relayer: `100` (100ms)
+  - Default for Gelato status: `10000` (10 seconds)
+  - Must be between `100` and `300000` (5 minutes)
+
+**Example:**
+```typescript
+// Wait up to 30 seconds, checking every 500ms
+const receipt = await relayer.sendTransactionSync({
+  chainId: baseSepolia.id,
+  to: '0xTargetContract...',
+  data: '0xCalldata...',
+  payment: sponsored(),
+  timeout: 30000,
+  pollingInterval: 500
+});
+```
 
 ---
 
@@ -355,6 +381,7 @@ enum ErrorCode {
   MethodNotFound = -32601,
   InvalidParams = -32602,
   InternalError = -32603,
+  TimeoutError = -32070,
 
   // Relayer
   Unauthorized = 4100,
@@ -410,6 +437,67 @@ switch (status.status) {
   case StatusCode.Reverted:
     console.log('Reverted:', status.data);
     break;
+}
+```
+
+## Error Handling
+
+### Timeout Errors
+
+Synchronous methods (`sendTransactionSync`, `waitForStatus`, `waitForReceipt`) throw `TimeoutError` when operations don't complete within the configured timeout:
+
+```typescript
+import { TimeoutError } from '@gelatocloud/gasless';
+
+try {
+  const receipt = await relayer.sendTransactionSync({
+    chainId: baseSepolia.id,
+    to: '0xTargetContract...',
+    data: '0xCalldata...',
+    timeout: 10000
+  });
+} catch (error) {
+  if (error instanceof TimeoutError) {
+    console.error('Transaction timed out:', error.message);
+    // Transaction may still be pending - you can retry with longer timeout
+    // or use async methods to check status manually
+  } else {
+    console.error('Other error:', error);
+  }
+}
+```
+
+### Recovery Strategies
+
+If a timeout occurs:
+1. **Check status manually**: Use `getStatus({ id })` to check if transaction is still processing
+2. **Retry with longer timeout**: Increase `timeout` and call `waitForStatus` again
+3. **Use async methods**: Switch to async pattern for more control
+
+```typescript
+try {
+  // Try with default 10s timeout
+  const receipt = await relayer.sendTransactionSync({
+    chainId: baseSepolia.id,
+    to: '0xTargetContract...',
+    data: '0xCalldata...',
+  });
+} catch (error) {
+  if (error instanceof TimeoutError) {
+    // Retry with 60s timeout
+    const taskId = await relayer.sendTransaction({
+      chainId: baseSepolia.id,
+      to: '0xTargetContract...',
+      data: '0xCalldata...',
+    });
+
+    const status = await relayer.waitForStatus({
+      id: taskId,
+      timeout: 60000
+    });
+
+    console.log('Transaction completed:', status);
+  }
 }
 ```
 

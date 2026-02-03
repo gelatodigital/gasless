@@ -1,6 +1,14 @@
 import type { Transport } from 'viem';
 import { z } from 'zod';
-import { evmAddressSchema, hexData32Schema, hexDataSchema } from '../../../types/index.js';
+import {
+  baseStatusSchema,
+  hexData32Schema,
+  receiptSchema,
+  type TransactionReceipt
+} from '../../../types/index.js';
+
+// Re-export TransactionReceipt for backwards compatibility
+export type { TransactionReceipt };
 
 export enum StatusCode {
   Pending = 100,
@@ -9,25 +17,6 @@ export enum StatusCode {
   Rejected = 400,
   Reverted = 500
 }
-
-const logSchema = z.object({
-  address: evmAddressSchema,
-  data: hexDataSchema,
-  topics: z.array(hexData32Schema)
-});
-
-const receiptSchema = z.object({
-  blockHash: hexData32Schema,
-  blockNumber: z.coerce.bigint(),
-  gasUsed: z.coerce.bigint(),
-  logs: z.array(logSchema).optional(),
-  transactionHash: hexData32Schema
-});
-
-const baseStatusSchema = z.object({
-  chainId: z.coerce.number(),
-  createdAt: z.number()
-});
 
 const pendingStatusSchema = baseStatusSchema.extend({
   status: z.literal(StatusCode.Pending)
@@ -79,8 +68,6 @@ export const statusSchema = z.discriminatedUnion('status', [
 export type TerminalStatus = z.infer<typeof terminalStatusSchema>;
 
 export type Status = z.infer<typeof statusSchema>;
-
-export type TransactionReceipt = z.infer<typeof receiptSchema>;
 
 export type GetStatusParameters = {
   id: string;
