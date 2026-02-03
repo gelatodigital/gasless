@@ -10,7 +10,7 @@
   - **Turbo Relayer**: The fastest, most efficient way to submit transactions on-chain with zero gas overhead, ideal for latency-sensitive workflows.
   - **Turbo Relayer with Smart Account** - Leverage Smart Accounts for streamlined transaction encoding and signing while retaining Turbo-level performance.
   - **ERC-4337 Bundler** - A fully compliant ERC-4337 bundler for native Account Abstraction flows.
-- **Flexible payment models** - Support for sponsored transactions, ERC-20 token payments, or native currency.
+- **Sponsorship via Gas Tank** - Support for sponsored transactions using your Gas Tank.
 - **2D nonce support** - Advanced nonce management using both `nonce` and `nonceKey` for parallelized execution.
 - **Type-safe** - Implemented on top of [viem](https://viem.sh), offering complete TypeScript type safety and developer ergonomics.
 - **Synchronous methods**: Send transaction and get the receipt in a single call
@@ -42,7 +42,7 @@ Direct gasless transaction relay without smart accounts. Best for simple sponsor
 
 **Synchronous:**
 ```typescript
-import { createGelatoEvmRelayerClient, sponsored } from '@gelatocloud/gasless';
+import { createGelatoEvmRelayerClient } from '@gelatocloud/gasless';
 import { baseSepolia } from 'viem/chains';
 
 const relayer = createGelatoEvmRelayerClient({
@@ -54,8 +54,7 @@ const relayer = createGelatoEvmRelayerClient({
 const receipt = await relayer.sendTransactionSync({
   chainId: baseSepolia.id,
   to: '0xTargetContract...',
-  data: '0xCalldata...',
-  payment: sponsored()
+  data: '0xCalldata...'
 });
 
 console.log(`Transaction hash: ${receipt.transactionHash}`);
@@ -63,7 +62,7 @@ console.log(`Transaction hash: ${receipt.transactionHash}`);
 
 **Asynchronous:**
 ```typescript
-import { createGelatoEvmRelayerClient, StatusCode, sponsored } from '@gelatocloud/gasless';
+import { createGelatoEvmRelayerClient, StatusCode } from '@gelatocloud/gasless';
 import { baseSepolia } from 'viem/chains';
 
 const relayer = createGelatoEvmRelayerClient({
@@ -75,15 +74,14 @@ const relayer = createGelatoEvmRelayerClient({
 const taskId = await relayer.sendTransaction({
   chainId: baseSepolia.id,
   to: '0xTargetContract...',
-  data: '0xCalldata...',
-  payment: sponsored()
+  data: '0xCalldata...'
 });
 
 // Poll for status separately
-const status = await relayer.waitForStatus({ id: taskId });
+const { status, receipt } = await relayer.waitForStatus({ id: taskId });
 
 if (status.status === StatusCode.Success) {
-  console.log(`Transaction hash: ${status.receipt.transactionHash}`);
+  console.log(`Transaction hash: ${receipt.transactionHash}`);
 }
 ```
 
@@ -95,9 +93,7 @@ Gelato's smart account implementation with ERC-7821 delegation pattern.
 ```typescript
 import {
   createGelatoSmartAccountClient,
-  toGelatoSmartAccount,
-  sponsored
-} from '@gelatocloud/gasless';
+  toGelatoSmartAccount } from '@gelatocloud/gasless';
 import { createPublicClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { baseSepolia } from 'viem/chains';
@@ -123,9 +119,7 @@ const receipt = await client.sendTransactionSync({
   calls: [
     { to: '0xContract1...', data: '0xCalldata1...' },
     { to: '0xContract2...', data: '0xCalldata2...' }
-  ],
-  payment: sponsored()
-  // Optional: nonce or nonceKey for 2D nonce management
+  ]// Optional: nonce or nonceKey for 2D nonce management
 });
 
 console.log(`Transaction hash: ${receipt.transactionHash}`);
@@ -136,17 +130,13 @@ console.log(`Transaction hash: ${receipt.transactionHash}`);
 import {
   createGelatoSmartAccountClient,
   toGelatoSmartAccount,
-  StatusCode,
-  sponsored
-} from '@gelatocloud/gasless';
+  StatusCode } from '@gelatocloud/gasless';
 
 // ... same setup as above ...
 
 // Send transaction (returns immediately with task ID)
 const taskId = await client.sendTransaction({
-  calls: [{ to: '0xContract...', data: '0xCalldata...' }],
-  payment: sponsored()
-});
+  calls: [{ to: '0xContract...', data: '0xCalldata...' }] });
 
 // Poll for status separately
 const status = await client.waitForStatus({ id: taskId });
@@ -156,27 +146,13 @@ if (status.status === StatusCode.Success) {
 }
 ```
 
-**Fee Quote (Optional):** Pre-fetch a quote to avoid duplicate requests:
-
-```typescript
-const quote = await client.getFeeQuote({
-  calls: [{ to: '0x...', data: '0x...' }],
-  payment: token('0xTokenAddress...')
-});
-
-const hash = await client.sendTransaction({
-  calls: [{ to: '0x...', data: '0x...' }],
-  payment: token('0xTokenAddress...'),
-  quote // Pass the pre-fetched quote
-});
-```
 
 ### Bundler (ERC-4337)
 
 Compatible with any ERC-4337 smart account.
 
 ```typescript
-import { createGelatoBundlerClient, sponsored } from '@gelatocloud/gasless';
+import { createGelatoBundlerClient } from '@gelatocloud/gasless';
 import { to7702SimpleSmartAccount } from 'permissionless/accounts';
 import { createPublicClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -200,7 +176,7 @@ const bundler = await createGelatoBundlerClient({
   account,
   client,
   apiKey: process.env.GELATO_API_KEY,
-  payment: sponsored()
+  sponsored: true
 });
 
 // Send a user operation
@@ -214,20 +190,6 @@ const { receipt } = await bundler.waitForUserOperationReceipt({ hash });
 console.log(`Transaction hash: ${receipt.transactionHash}`);
 ```
 
-## Payment Options
-
-```typescript
-import { sponsored, token, native } from '@gelatocloud/gasless';
-
-// Gelato pays gas (gasless for user)
-payment: sponsored()
-
-// Pay with an ERC-20 token
-payment: token('0xTokenAddress...')
-
-// Pay with native currency (ETH, MATIC, etc.)
-payment: native()
-```
 
 ## API Reference
 
@@ -248,14 +210,13 @@ const client = createGelatoEvmRelayerClient({
 
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
-| `sendTransaction` | `{ chainId, to, data, payment, authorizationList?, context? }` | `Promise<Hex>` | Submit a transaction |
-| `sendTransactionSync` | `{ chainId, to, data, payment, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
+| `sendTransaction` | `{ chainId, to, data, authorizationList?, context? }` | `Promise<Hex>` | Submit a transaction |
+| `sendTransactionSync` | `{ chainId, to, data, timeout?, pollingInterval?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
-| `waitForStatus` | `{ id: string }` | `Promise<TerminalStatus>` | Wait for final status |
-| `waitForReceipt` | `{ id: string }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
+| `waitForStatus` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TerminalStatus>` | Wait for final status |
+| `waitForReceipt` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 | `getFeeData` | `{ chainId, gas, l1Fee? }` | `Promise<FeeData>` | Get network fee data |
-| `getFeeQuote` | `{ chainId, gas, token, l1Fee? }` | `Promise<FeeQuote>` | Get fee quote for token payment |
 
 ---
 
@@ -287,17 +248,38 @@ const client = await createGelatoSmartAccountClient({
 
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
-| `sendTransaction` | `{ calls, payment, nonce?, nonceKey?, quote? }` | `Promise<Hex>` | Send transaction(s) |
-| `sendTransactionSync` | `{ calls, payment, nonce?, nonceKey?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
-| `getFeeQuote` | `{ calls, payment }` | `Promise<FeeQuote>` | Get fee quote |
+| `sendTransaction` | `{ calls, nonce?, nonceKey?}` | `Promise<Hex>` | Send transaction(s) |
+| `sendTransactionSync` | `{ calls, nonce?, nonceKey?, timeout?, pollingInterval?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
-| `waitForStatus` | `{ id: string }` | `Promise<TerminalStatus>` | Wait for final status |
-| `waitForReceipt` | `{ id: string }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
+| `waitForStatus` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TerminalStatus>` | Wait for final status |
+| `waitForReceipt` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 
 **Nonce Options:**
 - `nonce`: Explicit nonce value
 - `nonceKey`: Key for 2D nonce (allows parallel transactions)
+
+**Polling Configuration:**
+
+All synchronous methods (`sendTransactionSync`, `sendUserOperationSync`, `waitForStatus`, `waitForReceipt`) support customizable polling behavior:
+
+- `timeout` (optional): Maximum wait time in milliseconds
+  - Default: `120000` (2 minutes)
+  - Must not exceed `600000` (10 minutes)
+- `pollingInterval` (optional): Frequency to check status in milliseconds
+  - Default: `1000` (1 second)
+
+**Example:**
+```typescript
+// Wait up to 30 seconds, checking every 500ms
+const receipt = await relayer.sendTransactionSync({
+  chainId: baseSepolia.id,
+  to: '0xTargetContract...',
+  data: '0xCalldata...',
+  timeout: 30000,
+  pollingInterval: 500
+});
+```
 
 ---
 
@@ -312,7 +294,7 @@ const bundler = await createGelatoBundlerClient({
   account: SmartAccount,       // Any ERC-4337 smart account
   client: Client,              // viem public client
   apiKey: string,              // Your Gelato API key
-  payment?: Payment,           // Default payment method
+  sponsored: boolean,          // Whether to use sponsored payment via Gas Tank
   pollingInterval?: number     // Polling interval in ms
 });
 ```
@@ -322,7 +304,7 @@ const bundler = await createGelatoBundlerClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendUserOperation` | `{ calls }` | `Promise<Hex>` | Send a user operation |
-| `sendUserOperationSync` | `{ calls, timeout }` | `Promise<UserOperationReceipt>` | Send and wait for receipt |
+| `sendUserOperationSync` | `{ calls, timeout?, pollingInterval? }` | `Promise<UserOperationReceipt>` | Send and wait for receipt |
 | `waitForUserOperationReceipt` | `{ hash }` | `Promise<{ receipt }>` | Wait for receipt |
 | `estimateUserOperationGas` | `UserOperationParams` | `Promise<GasEstimate>` | Estimate gas |
 | `prepareUserOperation` | `UserOperationParams` | `Promise<UserOperation>` | Prepare operation |
@@ -355,6 +337,7 @@ enum ErrorCode {
   MethodNotFound = -32601,
   InvalidParams = -32602,
   InternalError = -32603,
+  TimeoutError = -32070,
 
   // Relayer
   Unauthorized = 4100,
@@ -371,15 +354,6 @@ enum ErrorCode {
   PaymasterValidationFailed = -32501,
   InvalidSignature = -32507,
   ExecutionFailed = -32521
-}
-```
-
-#### PaymentType
-
-```typescript
-enum PaymentType {
-  Token = 'token',        // Pay with ERC-20 or native
-  Sponsored = 'sponsored' // Gelato pays (gasless)
 }
 ```
 
@@ -411,6 +385,114 @@ switch (status.status) {
     console.log('Reverted:', status.data);
     break;
 }
+```
+
+## Error Handling
+
+### Timeout Errors
+
+Synchronous methods (`sendTransactionSync`, `waitForStatus`, `waitForReceipt`) throw `TimeoutError` when operations don't complete within the configured timeout:
+
+```typescript
+import { TimeoutError } from '@gelatocloud/gasless';
+
+try {
+  const receipt = await relayer.sendTransactionSync({
+    chainId: baseSepolia.id,
+    to: '0xTargetContract...',
+    data: '0xCalldata...',
+    timeout: 10000
+  });
+} catch (error) {
+  if (error instanceof TimeoutError) {
+    console.error('Transaction timed out:', error.message);
+    // Transaction may still be pending - you can retry with longer timeout
+    // or use async methods to check status manually
+  } else {
+    console.error('Other error:', error);
+  }
+}
+```
+
+### Automatic Fallback on Timeout
+
+When `sendTransactionSync` times out, it automatically falls back to polling for the transaction status. If you see a warning message like:
+
+```
+Transaction 0x... sync call timed out, falling back to polling for completion. DO NOT RETRY this transaction.
+```
+
+This means your transaction was successfully submitted but the sync method timed out. The SDK will continue polling for completion automatically. **Do not retry the operation** as this could result in duplicate transactions.
+
+### Recovery Strategies
+
+If a timeout occurs:
+1. **Wait for automatic fallback**: `sendTransactionSync` automatically polls after timeout
+2. **Check status manually**: Use `getStatus({ id })` to check if transaction is still processing
+3. **Retry with longer timeout**: Increase `timeout` and call `waitForStatus` again
+4. **Use async methods**: Switch to async pattern for more control
+
+```typescript
+try {
+  // Try with default 10s timeout
+  const receipt = await relayer.sendTransactionSync({
+    chainId: baseSepolia.id,
+    to: '0xTargetContract...',
+    data: '0xCalldata...',
+  });
+} catch (error) {
+  if (error instanceof TimeoutError) {
+    // Retry with 60s timeout
+    const taskId = await relayer.sendTransaction({
+      chainId: baseSepolia.id,
+      to: '0xTargetContract...',
+      data: '0xCalldata...',
+    });
+
+    const status = await relayer.waitForStatus({
+      id: taskId,
+      timeout: 60000
+    });
+
+    console.log('Transaction completed:', status);
+  }
+}
+```
+
+### Configuration Limits
+
+The SDK enforces the following limits to prevent denial of service:
+
+```typescript
+import {
+  MIN_TIMEOUT,
+  MAX_TIMEOUT,
+  MIN_POLLING_INTERVAL,
+  MAX_POLLING_INTERVAL
+} from '@gelatocloud/gasless';
+
+console.log(MIN_TIMEOUT); // 1000ms (1 second)
+console.log(MAX_TIMEOUT); // 600000ms (10 minutes)
+console.log(MIN_POLLING_INTERVAL); // 100ms
+console.log(MAX_POLLING_INTERVAL); // 300000ms (5 minutes)
+```
+
+You can set default timeout and polling interval at the client level:
+
+```typescript
+const relayer = createGelatoEvmRelayerClient({
+  apiKey: process.env.GELATO_API_KEY,
+  timeout: 30000, // Default 30 second timeout
+  pollingInterval: 500 // Default 500ms polling interval
+});
+
+// Methods use client defaults unless overridden
+const receipt = await relayer.sendTransactionSync({
+  chainId: baseSepolia.id,
+  to: '0xTargetContract...',
+  data: '0xCalldata...',
+  // timeout: 60000 // Optional: override client default
+});
 ```
 
 ## Requirements

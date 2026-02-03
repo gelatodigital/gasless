@@ -78,7 +78,6 @@ const bundler = await createGelatoBundlerClient({
   account,
   apiKey: GELATO_API_KEY,
   client,
-  payment: sponsored(),
   pollingInterval: 100
 });
 ```

@@ -7,24 +7,32 @@ import {
   type SendUserOperationParameters,
   type SmartAccount,
   type UserOperation,
-  type UserOperationReceipt
+  type UserOperationReceipt,
+  waitForUserOperationReceipt
 } from 'viem/account-abstraction';
 import { parseAccount } from 'viem/accounts';
-import type { CapabilitiesByChain } from '../../relayer/evm/actions/index.js';
-import { AccountNotFoundError, type Payment } from '../../types/index.js';
+import { AccountNotFoundError } from '../../types/index.js';
+import { retrieveIdFromError } from '../../utils/index.js';
 import { prepareUserOperation } from './prepareUserOperation.js';
 
 export type SendUserOperationSyncParameters = SendUserOperationParameters & {
-  timeout: number;
+  timeout?: number;
+  requestTimeout?: number;
+  pollingInterval?: number;
 };
 
 export const sendUserOperationSync = async <account extends SmartAccount | undefined>(
   client: Client<Transport, Chain | undefined, account>,
   parameters: SendUserOperationSyncParameters,
-  capabilities: CapabilitiesByChain,
-  payment?: Payment
+  sponsored: boolean
 ): Promise<UserOperationReceipt> => {
-  const { account: account_ = client.account, entryPointAddress, timeout } = parameters;
+  const {
+    account: account_ = client.account,
+    entryPointAddress,
+    timeout = 120000,
+    requestTimeout,
+    pollingInterval = client.pollingInterval
+  } = parameters;
 
   if (!account_ && !parameters.sender) throw new AccountNotFoundError();
   const account = account_ ? parseAccount(account_) : undefined;
@@ -33,9 +41,7 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
     ? await prepareUserOperation(
         client,
         parameters as unknown as PrepareUserOperationParameters,
-        capabilities,
-        payment,
-        true
+        sponsored
       )
     : parameters;
 
@@ -52,14 +58,23 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
     const receipt = await client.request(
       {
         method: 'eth_sendUserOperationSync',
-        // biome-ignore lint/style/noNonNullAssertion: copied from viem
-        params: [rpcParameters, (entryPointAddress ?? account?.entryPoint?.address)!, { timeout }]
+        params: [
+          rpcParameters,
+          // biome-ignore lint/style/noNonNullAssertion: copied from viem
+          (entryPointAddress ?? account?.entryPoint?.address)!,
+          { timeout: requestTimeout }
+        ]
       } as never,
       { retryCount: 0 }
     );
 
     return formatUserOperationReceipt(receipt);
   } catch (error) {
+    const id = retrieveIdFromError(error);
+    if (id) {
+      return waitForUserOperationReceipt(client, { hash: id, pollingInterval, timeout });
+    }
+
     // biome-ignore lint/suspicious/noExplicitAny: copied from viem
     const calls = (parameters as any).calls;
     throw getUserOperationError(error as BaseError, {

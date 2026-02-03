@@ -26,3 +26,36 @@ export const evmTokenSchema = z.object({
 });
 
 export type EvmToken = z.infer<typeof evmTokenSchema>;
+
+/**
+ * Schema for transaction log entries
+ */
+export const logSchema = z.object({
+  address: evmAddressSchema,
+  data: hexDataSchema,
+  topics: z.array(hexData32Schema)
+});
+
+/**
+ * Schema for transaction receipts
+ */
+export const receiptSchema = z.object({
+  blockHash: hexData32Schema,
+  blockNumber: z.coerce.bigint(),
+  gasUsed: z.coerce.bigint(),
+  logs: z.array(logSchema).optional(),
+  transactionHash: hexData32Schema
+});
+
+/**
+ * Base schema for all status responses
+ */
+export const baseStatusSchema = z.object({
+  chainId: z.coerce.number(),
+  createdAt: z.number()
+});
+
+// Type exports
+export type Log = z.infer<typeof logSchema>;
+export type TransactionReceipt = z.infer<typeof receiptSchema>;
+export type BaseStatus = z.infer<typeof baseStatusSchema>;

@@ -1,13 +1,12 @@
 import type { Client, EstimateFeesPerGasReturnType } from 'viem';
-import type { Payment } from '../../types/index.js';
 
 export type GetUserOperationGasPriceReturnType = EstimateFeesPerGasReturnType<'eip1559'>;
 
 export const getUserOperationGasPrice = async (
   client: Client,
-  payment?: Payment
+  sponsored: boolean
 ): Promise<GetUserOperationGasPriceReturnType> => {
-  if (payment) {
+  if (sponsored) {
     return {
       maxFeePerGas: 0n,
       maxPriorityFeePerGas: 0n

@@ -12,13 +12,10 @@ import {
 import { parseAccount } from 'viem/accounts';
 import { getChainId as getChainId_, prepareAuthorization } from 'viem/actions';
 import { concat, encodeFunctionData, getAction } from 'viem/utils';
-import type { CapabilitiesByChain } from '../../relayer/evm/actions/index.js';
-import { AccountNotFoundError, type Payment, PaymentType } from '../../types/index.js';
-import { appendPayment } from '../../utils/payment.js';
+import { AccountNotFoundError } from '../../types/index.js';
 import type { GelatoBundlerClient } from '..';
 import { estimateUserOperationGas } from './estimateUserOperationGas.js';
 import { getUserOperationGasPrice } from './getUserOperationGasPrice.js';
-import { getUserOperationQuote } from './getUserOperationQuote.js';
 
 const defaultParameters = [
   'factory',
@@ -38,9 +35,7 @@ export const prepareUserOperation = async <
 >(
   client: Client<Transport, Chain | undefined, account>,
   parameters_: PrepareUserOperationParameters<account, accountOverride, calls, request>,
-  capabilities: CapabilitiesByChain,
-  payment?: Payment,
-  quote: boolean = false
+  sponsored: boolean
 ): Promise<PrepareUserOperationReturnType<account, accountOverride, calls, request>> => {
   const parameters = parameters_ as PrepareUserOperationParameters;
   const {
@@ -115,121 +110,85 @@ export const prepareUserOperation = async <
   // Concurrently prepare properties required to fill the User Operation.
   ////////////////////////////////////////////////////////////////////////////////
 
-  const [{ callsWithoutPayment, callData }, factory, fees, nonce, authorization] =
-    await Promise.all([
-      (async () => {
-        if (parameters.calls) {
-          const callsWithoutPayment = parameters.calls.map((call_) => {
-            const call = call_ as Call;
-            if (call.abi)
-              return {
-                data: encodeFunctionData(call),
-                to: call.to,
-                value: call.value
-              } as Call;
-            return call as Call;
-          });
-
-          const calls =
-            payment?.type === PaymentType.Token
-              ? appendPayment(callsWithoutPayment, payment.address, capabilities.feeCollector, 1n)
-              : callsWithoutPayment;
-
-          const callData = await account.encodeCalls(calls);
-
-          return {
-            callData,
-            callsWithoutPayment
-          };
-        }
-
-        if (payment?.type !== PaymentType.Token) {
-          return {
-            callData: parameters.callData,
-            callsWithoutPayment: undefined
-          };
-        }
-
-        if (!account.decodeCalls) {
-          throw new Error(
-            'Account must be able to decodeCalls in order to append token payments if raw callData is specified'
-          );
-        }
-
-        const callsWithoutPayment = (await account.decodeCalls(parameters.callData)) as Call[];
-
-        const calls = appendPayment(
-          callsWithoutPayment,
-          payment.address,
-          capabilities.feeCollector,
-          1n
-        );
+  const [callData, factory, fees, nonce, authorization] = await Promise.all([
+    (async () => {
+      if (parameters.calls) {
+        const calls = parameters.calls.map((call_) => {
+          const call = call_ as Call;
+          if (call.abi)
+            return {
+              data: encodeFunctionData(call),
+              to: call.to,
+              value: call.value
+            } as Call;
+          return call as Call;
+        });
 
         const callData = await account.encodeCalls(calls);
 
+        return callData;
+      }
+
+      return parameters.callData;
+    })(),
+    (async () => {
+      if (!properties.includes('factory')) return undefined;
+      if (parameters.initCode) return { initCode: parameters.initCode };
+      if (parameters.factory && parameters.factoryData) {
         return {
-          callData,
-          callsWithoutPayment
+          factory: parameters.factory,
+          factoryData: parameters.factoryData
         };
-      })(),
-      (async () => {
-        if (!properties.includes('factory')) return undefined;
-        if (parameters.initCode) return { initCode: parameters.initCode };
-        if (parameters.factory && parameters.factoryData) {
-          return {
-            factory: parameters.factory,
-            factoryData: parameters.factoryData
-          };
-        }
+      }
 
-        const { factory, factoryData } = await account.getFactoryArgs();
+      const { factory, factoryData } = await account.getFactoryArgs();
 
-        if (account.entryPoint.version === '0.6')
-          return {
-            initCode: factory && factoryData ? concat([factory, factoryData]) : undefined
-          };
+      if (account.entryPoint.version === '0.6')
         return {
-          factory,
-          factoryData
+          initCode: factory && factoryData ? concat([factory, factoryData]) : undefined
         };
-      })(),
-      (async () => {
-        if (!properties.includes('fees')) return undefined;
+      return {
+        factory,
+        factoryData
+      };
+    })(),
+    (async () => {
+      if (!properties.includes('fees')) return undefined;
 
-        // If we have sufficient properties for fees, return them.
-        if (
-          typeof parameters.maxFeePerGas === 'bigint' &&
-          typeof parameters.maxPriorityFeePerGas === 'bigint'
-        )
-          return request;
+      // If we have sufficient properties for fees, return them.
+      if (
+        typeof parameters.maxFeePerGas === 'bigint' &&
+        typeof parameters.maxPriorityFeePerGas === 'bigint'
+      )
+        return request;
 
-        const fees = await getUserOperationGasPrice(bundlerClient, payment);
+      const fees = await getUserOperationGasPrice(bundlerClient, sponsored);
 
+      return {
+        ...request,
+        ...fees
+      };
+    })(),
+    (async () => {
+      if (!properties.includes('nonce')) return undefined;
+      if (typeof parameters.nonce === 'bigint') return parameters.nonce;
+      return account.getNonce();
+    })(),
+    (async () => {
+      if (!properties.includes('authorization')) return undefined;
+      if (typeof parameters.authorization === 'object') return parameters.authorization;
+      if (account.authorization && !(await account.isDeployed())) {
+        const authorization = await prepareAuthorization(account.client, account.authorization);
         return {
-          ...request,
-          ...fees
-        };
-      })(),
-      (async () => {
-        if (!properties.includes('nonce')) return undefined;
-        if (typeof parameters.nonce === 'bigint') return parameters.nonce;
-        return account.getNonce();
-      })(),
-      (async () => {
-        if (!properties.includes('authorization')) return undefined;
-        if (typeof parameters.authorization === 'object') return parameters.authorization;
-        if (account.authorization && !(await account.isDeployed())) {
-          const authorization = await prepareAuthorization(account.client, account.authorization);
-          return {
-            ...authorization,
-            r: '0xfffffffffffffffffffffffffffffff000000000000000000000000000000000',
-            s: '0x7aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            yParity: 1
-          } satisfies SignedAuthorization;
-        }
-        return undefined;
-      })()
-    ]);
+          ...authorization,
+          r: '0xfffffffffffffffffffffffffffffff000000000000000000000000000000000',
+          s: '0x7aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          yParity: 1
+        } satisfies SignedAuthorization;
+      }
+      return undefined;
+    })()
+  ]);
 
   ////////////////////////////////////////////////////////////////////////////////
   // Fill User Operation with the prepared properties from above.
@@ -310,35 +269,7 @@ export const prepareUserOperation = async <
   // Fill User Operation with gas-related properties.
   ////////////////////////////////////////////////////////////////////////////////
 
-  if (quote && callsWithoutPayment && payment?.type === PaymentType.Token) {
-    const quote = await getUserOperationQuote(
-      bundlerClient,
-      {
-        account,
-        stateOverride,
-        ...request
-      },
-      capabilities,
-      payment
-    );
-
-    const calls = appendPayment(
-      callsWithoutPayment,
-      payment.address,
-      capabilities.feeCollector,
-      quote.fee
-    );
-
-    const callData = await account.encodeCalls(calls);
-
-    request = {
-      ...request,
-      callData,
-      callGasLimit: request.callGasLimit ?? quote.callGasLimit,
-      preVerificationGas: request.preVerificationGas ?? quote.preVerificationGas,
-      verificationGasLimit: request.verificationGasLimit ?? quote.verificationGasLimit
-    } as PrepareUserOperationRequest;
-  } else if (properties.includes('gas')) {
+  if (properties.includes('gas')) {
     // If the Account has opinionated gas estimation logic, run the `estimateGas` hook and
     // fill the request with the prepared gas properties.
     if (account.userOperation?.estimateGas) {
@@ -376,8 +307,7 @@ export const prepareUserOperation = async <
             : {}),
           ...request
         } as EstimateUserOperationGasParameters,
-        capabilities,
-        payment
+        sponsored
       );
       request = {
         ...request,

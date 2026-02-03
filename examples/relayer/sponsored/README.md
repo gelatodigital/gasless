@@ -66,12 +66,11 @@ Creates a relayer client configured for Base Sepolia testnet.
 const id = await relayer.sendTransaction({
   chainId: chain.id,
   data: '0xd09de08a',
-  payment: sponsored(),
   to: '0xE27C1359cf02B49acC6474311Bd79d1f10b1f8De'
 });
 ```
 
-Submits a transaction to Gelato. The `sponsored()` payment type means Gelato covers gas costs.
+Submits a transaction to Gelato. Your Gelato Gast Tank covers gas costs.
 
 ### Step 3: Wait for Confirmation
 

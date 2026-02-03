@@ -1,4 +1,5 @@
 import type { Transport } from 'viem';
+import { withTimeout } from '../../../utils/index.js';
 import {
   GelatoStatusCode,
   type GelatoTerminalStatus,
@@ -6,23 +7,37 @@ import {
   getGelatoStatus
 } from './getGelatoStatus.js';
 
-// TODO: use websockets
-// TODO: make polling interval configurable
+export type WaitForGelatoStatusParameters = GetGelatoStatusParameters & {
+  timeout?: number;
+  pollingInterval?: number;
+};
+
 export const waitForGelatoStatus = async (
   client: ReturnType<Transport>,
-  parameters: GetGelatoStatusParameters
+  parameters: WaitForGelatoStatusParameters
 ): Promise<GelatoTerminalStatus> => {
-  while (true) {
-    const status = await getGelatoStatus(client, parameters);
+  const { timeout = 120000, pollingInterval = 10000 } = parameters;
 
-    if (
-      status.status !== GelatoStatusCode.Pending &&
-      status.status !== GelatoStatusCode.Submitted &&
-      status.status !== GelatoStatusCode.Success
-    ) {
-      return status;
-    }
+  const result = await withTimeout(() => getGelatoStatus(client, parameters), {
+    pollingInterval,
+    shouldContinue: (status) =>
+      status.status === GelatoStatusCode.Pending ||
+      status.status === GelatoStatusCode.Submitted ||
+      status.status === GelatoStatusCode.Success, // Success is intermediate, wait for Finalized
+    timeout,
+    timeoutErrorMessage: `Timeout waiting for gelato status for transaction ${parameters.id} after ${timeout}ms`
+  });
 
-    await new Promise((r) => setTimeout(r, 100));
+  // Runtime validation instead of unsafe type assertion
+  if (
+    result.status === GelatoStatusCode.Pending ||
+    result.status === GelatoStatusCode.Submitted ||
+    result.status === GelatoStatusCode.Success
+  ) {
+    throw new Error(
+      `Internal error: withTimeout returned non-terminal status ${result.status} for transaction ${parameters.id}`
+    );
   }
+
+  return result;
 };

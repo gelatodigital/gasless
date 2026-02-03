@@ -2,12 +2,12 @@ import { resolve } from 'node:path';
 import { config } from 'dotenv';
 
 // Load root .env first (defaults)
-config({ path: resolve(__dirname, '../../../../.env') });
+config({ path: resolve(__dirname, '../../../../.env'), quiet: true });
 
 // Load local .env to override (optional)
-config({ override: true });
+config({ override: true, quiet: true });
 
-import { createGelatoBundlerClient, sponsored } from '@gelatocloud/gasless';
+import { createGelatoBundlerClient } from '@gelatocloud/gasless';
 import { to7702KernelSmartAccount } from 'permissionless/accounts';
 import { createPublicClient, type Hex, http, type SignedAuthorization } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
@@ -40,8 +40,8 @@ const main = async () => {
     account,
     apiKey: GELATO_API_KEY,
     client,
-    payment: sponsored(),
-    pollingInterval: 100
+    pollingInterval: 100,
+    sponsored: true
   });
 
   const deployed = await account.isDeployed();
@@ -58,6 +58,13 @@ const main = async () => {
     });
   }
 
+  const start = Date.now();
+  /**
+   * Note:
+   * You may also call bundler.sendUserOperation if preferred
+   * Then you can use bundler.waitForUserOperationReceipt to wait for the user operation receipt
+   * You can also define timeout or pollingInterval
+   */
   const { receipt } = await bundler.sendUserOperationSync({
     authorization,
     calls: [
@@ -69,7 +76,10 @@ const main = async () => {
     timeout: 10_000
   });
 
-  console.log(`Transaction hash: ${receipt.transactionHash}`);
+  const end = Date.now();
+  console.log(
+    `Sent user operation and got receipt with transaction hash ${receipt.transactionHash} included in block ${receipt.blockNumber} in ${end - start}ms`
+  );
 
   process.exit(0);
 };
