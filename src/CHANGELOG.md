@@ -1,5 +1,13 @@
 # @gelatocloud/gasless
 
+## 0.0.6
+
+### Patch Changes
+
+- 0e6270e: feat: fallback to polling receipt if sync method timeouts
+- 0e6270e: feat: remove token payment
+- 9243cf5: refactor: rename included status to success
+
 ## 0.0.5
 
 ### Patch Changes
