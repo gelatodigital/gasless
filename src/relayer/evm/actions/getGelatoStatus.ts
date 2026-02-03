@@ -1,4 +1,4 @@
-import type { TransactionReceipt, Transport } from 'viem';
+import type { RpcTransactionReceipt, TransactionReceipt, Transport } from 'viem';
 import { z } from 'zod';
 import { baseStatusSchema, hexData32Schema } from '../../../types/index.js';
 
@@ -21,12 +21,12 @@ const submittedStatusSchema = baseStatusSchema.extend({
 });
 
 const successStatusSchema = baseStatusSchema.extend({
-  receipt: z.custom<TransactionReceipt>(),
+  receipt: z.custom<RpcTransactionReceipt>(),
   status: z.literal(GelatoStatusCode.Success)
 });
 
 const finalizedStatusSchema = baseStatusSchema.extend({
-  receipt: z.custom<TransactionReceipt>(),
+  receipt: z.custom<RpcTransactionReceipt>(),
   status: z.literal(GelatoStatusCode.Finalized)
 });
 
@@ -39,23 +39,23 @@ const rejectedStatusSchema = baseStatusSchema.extend({
 const revertedStatusSchema = baseStatusSchema.extend({
   data: z.string(),
   message: z.string().optional(),
-  receipt: z.custom<TransactionReceipt>(),
+  receipt: z.custom<RpcTransactionReceipt>(),
   status: z.literal(GelatoStatusCode.Reverted)
 });
 
 export const gelatoTerminalStatusSchema = z.discriminatedUnion('status', [
-  finalizedStatusSchema,
+  finalizedStatusSchema.extend({ receipt: z.custom<TransactionReceipt>() }),
   rejectedStatusSchema,
-  revertedStatusSchema
+  revertedStatusSchema.extend({ receipt: z.custom<TransactionReceipt>() })
 ]);
 
 export const gelatoStatusSchema = z.discriminatedUnion('status', [
   pendingStatusSchema,
   submittedStatusSchema,
-  successStatusSchema,
-  finalizedStatusSchema,
+  successStatusSchema.extend({ receipt: z.custom<TransactionReceipt>() }),
+  finalizedStatusSchema.extend({ receipt: z.custom<TransactionReceipt>() }),
   rejectedStatusSchema,
-  revertedStatusSchema
+  revertedStatusSchema.extend({ receipt: z.custom<TransactionReceipt>() })
 ]);
 
 export type GelatoTerminalStatus = z.infer<typeof gelatoTerminalStatusSchema>;

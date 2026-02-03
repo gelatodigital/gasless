@@ -1,4 +1,4 @@
-import type { TransactionReceipt, Transport } from 'viem';
+import type { RpcTransactionReceipt, TransactionReceipt, Transport } from 'viem';
 import { z } from 'zod';
 import { baseStatusSchema, hexData32Schema } from '../../../types/index.js';
 
@@ -20,7 +20,7 @@ const submittedStatusSchema = baseStatusSchema.extend({
 });
 
 const successStatusSchema = baseStatusSchema.extend({
-  receipt: z.custom<TransactionReceipt>(),
+  receipt: z.custom<RpcTransactionReceipt>(),
   status: z.literal(StatusCode.Success)
 });
 
@@ -33,28 +33,28 @@ const rejectedStatusSchema = baseStatusSchema.extend({
 const revertedStatusSchema = baseStatusSchema.extend({
   data: z.string(),
   message: z.string().optional(),
-  receipt: z.custom<TransactionReceipt>(),
+  receipt: z.custom<RpcTransactionReceipt>(),
   status: z.literal(StatusCode.Reverted)
 });
 
 export const terminalStatusSchema = z.discriminatedUnion('status', [
-  successStatusSchema,
+  successStatusSchema.extend({ receipt: z.custom<TransactionReceipt>() }),
   rejectedStatusSchema,
-  revertedStatusSchema
+  revertedStatusSchema.extend({ receipt: z.custom<TransactionReceipt>() })
 ]);
 
 export const terminalStatusSchemaWithId = z.discriminatedUnion('status', [
-  successStatusSchema.extend({ id: z.string() }),
-  rejectedStatusSchema.extend({ id: z.string() }),
-  revertedStatusSchema.extend({ id: z.string() })
+  successStatusSchema.extend({ id: z.hex(), receipt: z.custom<TransactionReceipt>() }),
+  rejectedStatusSchema.extend({ id: z.hex() }),
+  revertedStatusSchema.extend({ id: z.hex(), receipt: z.custom<TransactionReceipt>() })
 ]);
 
 export const statusSchema = z.discriminatedUnion('status', [
   pendingStatusSchema,
   submittedStatusSchema,
-  successStatusSchema,
+  successStatusSchema.extend({ receipt: z.custom<TransactionReceipt>() }),
   rejectedStatusSchema,
-  revertedStatusSchema
+  revertedStatusSchema.extend({ receipt: z.custom<TransactionReceipt>() })
 ]);
 
 export type TerminalStatus = z.infer<typeof terminalStatusSchema>;
