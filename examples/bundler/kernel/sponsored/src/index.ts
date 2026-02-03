@@ -58,6 +58,13 @@ const main = async () => {
     });
   }
 
+  const start = Date.now();
+  /**
+   * Note:
+   * You may also call bundler.sendUserOperationS if preferred
+   * Then you can use bundler.waitForUserOperationReceipt to wait for the user operation receipt
+   * You can also define timeout or pollingInterval
+   */
   const { receipt } = await bundler.sendUserOperationSync({
     authorization,
     calls: [
@@ -69,7 +76,10 @@ const main = async () => {
     timeout: 10_000
   });
 
-  console.log(`Transaction hash: ${receipt.transactionHash}`);
+  const end = Date.now();
+  console.log(
+    `Sent user operation and got receipt with transaction hash ${receipt.transactionHash} included in block ${receipt.blockNumber} in ${end - start}ms`
+  );
 
   process.exit(0);
 };

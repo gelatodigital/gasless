@@ -2,10 +2,10 @@ import { resolve } from 'node:path';
 import { config } from 'dotenv';
 
 // Load root .env first (defaults)
-config({ path: resolve(__dirname, '../../../../.env') });
+config({ path: resolve(__dirname, '../../../../.env'), quiet: true });
 
 // Load local .env to override (optional)
-config({ override: true });
+config({ override: true, quiet: true });
 
 import { createGelatoBundlerClient, toGelatoSmartAccount } from '@gelatocloud/gasless';
 import { createPublicClient, type Hex, http, type SignedAuthorization } from 'viem';
@@ -56,6 +56,10 @@ const main = async () => {
     });
   }
 
+  /**
+   * Note:
+   * You may also call bundler.sendUserOperationSync if preferred
+   */
   const hash = await bundler.sendUserOperation({
     authorization,
     calls: [

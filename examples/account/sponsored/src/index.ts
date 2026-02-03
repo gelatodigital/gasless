@@ -2,10 +2,10 @@ import { resolve } from 'node:path';
 import { config } from 'dotenv';
 
 // Load root .env first (defaults)
-config({ path: resolve(__dirname, '../../../../.env') });
+config({ path: resolve(__dirname, '../../../../.env'), quiet: true });
 
 // Load local .env to override (optional)
-config({ override: true });
+config({ override: true, quiet: true });
 
 import { createGelatoSmartAccountClient, toGelatoSmartAccount } from '@gelatocloud/gasless';
 import { createPublicClient, type Hex, http } from 'viem';
@@ -45,11 +45,13 @@ const main = async () => {
     apiKey: GELATO_API_KEY
   });
 
+  const start = Date.now();
+
   /**
    * Note:
-   * You may also call relayer.getFeeQuote first
-   * The returned quote should then be passed to relayer.sendTransaction
-   * This avoids having sendTransaction fetch the quote again (duplicate)
+   * You may also call relayer.sendTransaction if preferred
+   * Then you can use relayer.waitForReceipt to wait for the transaction receipt
+   * You can also define timeout or pollingInterval
    */
   const receipt = await relayer.sendTransactionSync({
     calls: [
@@ -64,7 +66,10 @@ const main = async () => {
     nonce: encodeNonce(BigInt(Date.now()), 0n)
   });
 
-  console.log(`Transaction hash: ${receipt.transactionHash}`);
+  const end = Date.now();
+  console.log(
+    `Sent transaction request and got receipt with transaction hash ${receipt.transactionHash} included in block ${receipt.blockNumber} in ${end - start}ms`
+  );
 
   process.exit(0);
 };
