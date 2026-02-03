@@ -97,8 +97,7 @@ const result = await relayer.sendTransactionSync({
       to: '0xE27C1359cf02B49acC6474311Bd79d1f10b1f8De'
     }
   ],
-  nonce: encodeNonce(BigInt(Date.now()), 0n),
-  payment: sponsored()
+  nonce: encodeNonce(BigInt(Date.now()), 0n)
 });
 ```
 
