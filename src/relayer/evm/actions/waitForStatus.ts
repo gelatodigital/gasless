@@ -1,5 +1,5 @@
 import type { Transport } from 'viem';
-import { StatusCode, type TerminalStatus, terminalStatusSchema } from '../../../types/schema.js';
+import { StatusCode, type TerminalStatus } from '../../../types/schema.js';
 import { withTimeout } from '../../../utils/withTimeout.js';
 import { type GetStatusParameters, getStatus } from './getStatus.js';
 
@@ -29,5 +29,5 @@ export const waitForStatus = async (
     );
   }
 
-  return terminalStatusSchema.parse(result);
+  return result;
 };
