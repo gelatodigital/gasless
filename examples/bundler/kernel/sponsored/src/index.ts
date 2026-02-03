@@ -61,7 +61,7 @@ const main = async () => {
   const start = Date.now();
   /**
    * Note:
-   * You may also call bundler.sendUserOperationS if preferred
+   * You may also call bundler.sendUserOperation if preferred
    * Then you can use bundler.waitForUserOperationReceipt to wait for the user operation receipt
    * You can also define timeout or pollingInterval
    */

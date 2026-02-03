@@ -78,7 +78,7 @@ const taskId = await relayer.sendTransaction({
 });
 
 // Poll for status separately
-const status = await relayer.waitForStatus({ id: taskId });
+const { status, receipt } = await relayer.waitForStatus({ id: taskId });
 
 if (status.status === StatusCode.Success) {
   console.log(`Transaction hash: ${receipt.transactionHash}`);
