@@ -1,5 +1,6 @@
-import { type Hex, type HttpTransportConfig, http } from 'viem';
+import { type Hex, type HttpTransportConfig, http, type TransactionReceipt } from 'viem';
 import { GELATO_PROD_API, GELATO_STAGING_API } from '../../constants/index.js';
+import type { Status, TerminalStatus } from '../../types/index.js';
 import {
   type Capabilities,
   type FeeData,
@@ -16,11 +17,8 @@ import {
   getStatus,
   type SendTransactionParameters,
   type SendTransactionSyncParameters,
-  type Status,
   sendTransaction,
   sendTransactionSync,
-  type TerminalStatus,
-  type TransactionReceipt,
   type WaitForStatusParameters,
   waitForReceipt,
   waitForStatus

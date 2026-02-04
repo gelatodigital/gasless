@@ -1,5 +1,4 @@
-import { BaseError } from 'viem';
-import type { TransactionReceipt } from '../actions/getStatus.js';
+import { BaseError, type TransactionReceipt } from 'viem';
 
 export class TransactionRejectedError extends BaseError {
   readonly id: string;
@@ -56,8 +55,8 @@ export class TransactionRevertedError extends BaseError {
     chainId,
     createdAt,
     errorData,
-    receipt,
-    errorMessage
+    errorMessage,
+    receipt
   }: {
     id: string;
     chainId: number;

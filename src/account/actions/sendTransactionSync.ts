@@ -1,5 +1,6 @@
+import type { TransactionReceipt } from 'viem';
 import type { SmartAccount } from 'viem/account-abstraction';
-import type { GelatoEvmRelayerClient, TransactionReceipt } from '../../relayer/index.js';
+import type { GelatoEvmRelayerClient } from '../../relayer/index.js';
 import type { GelatoSmartAccountImplementation } from '../adapters/types/index.js';
 import type { SendTransactionParameters } from './sendTransaction.js';
 

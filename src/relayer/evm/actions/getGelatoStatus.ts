@@ -1,6 +1,14 @@
 import type { Transport } from 'viem';
 import { z } from 'zod';
-import { baseStatusSchema, hexData32Schema, receiptSchema } from '../../../types/index.js';
+import {
+  baseStatusSchema,
+  pendingStatusSchema,
+  rejectedStatusSchema,
+  revertedStatusSchema,
+  submittedStatusSchema,
+  successStatusSchema,
+  transactionReceiptSchema
+} from '../../../types/schema.js';
 
 export enum GelatoStatusCode {
   Pending = 100,
@@ -10,37 +18,9 @@ export enum GelatoStatusCode {
   Rejected = 400,
   Reverted = 500
 }
-
-const pendingStatusSchema = baseStatusSchema.extend({
-  status: z.literal(GelatoStatusCode.Pending)
-});
-
-const submittedStatusSchema = baseStatusSchema.extend({
-  hash: hexData32Schema,
-  status: z.literal(GelatoStatusCode.Submitted)
-});
-
-const successStatusSchema = baseStatusSchema.extend({
-  receipt: receiptSchema,
-  status: z.literal(GelatoStatusCode.Success)
-});
-
 const finalizedStatusSchema = baseStatusSchema.extend({
-  receipt: receiptSchema,
+  receipt: transactionReceiptSchema,
   status: z.literal(GelatoStatusCode.Finalized)
-});
-
-const rejectedStatusSchema = baseStatusSchema.extend({
-  data: z.unknown().optional(),
-  message: z.string(),
-  status: z.literal(GelatoStatusCode.Rejected)
-});
-
-const revertedStatusSchema = baseStatusSchema.extend({
-  data: z.string(),
-  message: z.string().optional(),
-  receipt: receiptSchema,
-  status: z.literal(GelatoStatusCode.Reverted)
 });
 
 export const gelatoTerminalStatusSchema = z.discriminatedUnion('status', [
@@ -58,7 +38,10 @@ export const gelatoStatusSchema = z.discriminatedUnion('status', [
   revertedStatusSchema
 ]);
 
-export type GelatoTerminalStatus = z.infer<typeof gelatoTerminalStatusSchema>;
+export type GelatoTerminalStatus =
+  | z.infer<typeof finalizedStatusSchema>
+  | z.infer<typeof rejectedStatusSchema>
+  | z.infer<typeof revertedStatusSchema>;
 
 export type GelatoStatus = z.infer<typeof gelatoStatusSchema>;
 

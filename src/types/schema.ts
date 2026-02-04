@@ -1,4 +1,4 @@
-import { getAddress, type Hex } from 'viem';
+import { formatTransactionReceipt, getAddress, type Hex, type RpcTransactionReceipt } from 'viem';
 import { z } from 'zod';
 
 const hexData32Pattern = /^0x([0-9a-fA-F][0-9a-fA-F]){32}$/;
@@ -28,26 +28,6 @@ export const evmTokenSchema = z.object({
 export type EvmToken = z.infer<typeof evmTokenSchema>;
 
 /**
- * Schema for transaction log entries
- */
-export const logSchema = z.object({
-  address: evmAddressSchema,
-  data: hexDataSchema,
-  topics: z.array(hexData32Schema)
-});
-
-/**
- * Schema for transaction receipts
- */
-export const receiptSchema = z.object({
-  blockHash: hexData32Schema,
-  blockNumber: z.coerce.bigint(),
-  gasUsed: z.coerce.bigint(),
-  logs: z.array(logSchema).optional(),
-  transactionHash: hexData32Schema
-});
-
-/**
  * Base schema for all status responses
  */
 export const baseStatusSchema = z.object({
@@ -55,7 +35,59 @@ export const baseStatusSchema = z.object({
   createdAt: z.number()
 });
 
-// Type exports
-export type Log = z.infer<typeof logSchema>;
-export type TransactionReceipt = z.infer<typeof receiptSchema>;
-export type BaseStatus = z.infer<typeof baseStatusSchema>;
+export const transactionReceiptSchema = z
+  .custom<RpcTransactionReceipt>()
+  .transform((receipt) => formatTransactionReceipt(receipt));
+
+export enum StatusCode {
+  Pending = 100,
+  Submitted = 110,
+  Success = 200,
+  Rejected = 400,
+  Reverted = 500
+}
+
+export const pendingStatusSchema = baseStatusSchema.extend({
+  status: z.literal(StatusCode.Pending)
+});
+
+export const submittedStatusSchema = baseStatusSchema.extend({
+  hash: hexData32Schema,
+  status: z.literal(StatusCode.Submitted)
+});
+
+export const successStatusSchema = baseStatusSchema.extend({
+  receipt: transactionReceiptSchema,
+  status: z.literal(StatusCode.Success)
+});
+
+export const rejectedStatusSchema = baseStatusSchema.extend({
+  data: z.unknown().optional(),
+  message: z.string(),
+  status: z.literal(StatusCode.Rejected)
+});
+
+export const revertedStatusSchema = baseStatusSchema.extend({
+  data: z.string(),
+  message: z.string().optional(),
+  receipt: transactionReceiptSchema,
+  status: z.literal(StatusCode.Reverted)
+});
+
+export const statusSchema = z.discriminatedUnion('status', [
+  pendingStatusSchema,
+  submittedStatusSchema,
+  successStatusSchema,
+  rejectedStatusSchema,
+  revertedStatusSchema
+]);
+
+export const terminalStatusSchema = z.discriminatedUnion('status', [
+  successStatusSchema,
+  rejectedStatusSchema,
+  revertedStatusSchema
+]);
+
+export type TerminalStatus = z.infer<typeof terminalStatusSchema>;
+
+export type Status = z.infer<typeof statusSchema>;
