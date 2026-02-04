@@ -3,16 +3,18 @@ import {
   formatUserOperationReceipt,
   formatUserOperationRequest,
   getUserOperationError,
+  getUserOperationReceipt,
   type PrepareUserOperationParameters,
   type SendUserOperationParameters,
   type SmartAccount,
   type UserOperation,
   type UserOperationReceipt,
-  waitForUserOperationReceipt
+  UserOperationReceiptNotFoundError
 } from 'viem/account-abstraction';
 import { parseAccount } from 'viem/accounts';
 import { AccountNotFoundError } from '../../types/index.js';
 import { retrieveIdFromError } from '../../utils/index.js';
+import { withTimeout } from '../../utils/withTimeout.js';
 import { prepareUserOperation } from './prepareUserOperation.js';
 
 export type SendUserOperationSyncParameters = SendUserOperationParameters & {
@@ -72,7 +74,34 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
   } catch (error) {
     const id = retrieveIdFromError(error);
     if (id) {
-      return waitForUserOperationReceipt(client, { hash: id, pollingInterval, timeout });
+      // Wrap getUserOperationReceipt with withTimeout for proper timeout handling
+      const receipt = await withTimeout(
+        async () => {
+          try {
+            return await getUserOperationReceipt(client, { hash: id });
+          } catch (error) {
+            // If receipt not found, return null to continue polling
+            if (error instanceof UserOperationReceiptNotFoundError) {
+              return null;
+            }
+            // Other errors propagate immediately
+            throw error;
+          }
+        },
+        {
+          pollingInterval,
+          shouldContinue: (receipt) => receipt === null,
+          timeout,
+          timeoutErrorMessage: `Timeout waiting for user operation receipt: ${id}`
+        }
+      );
+
+      // Type guard: receipt should never be null after withTimeout completes
+      if (!receipt) {
+        throw new Error('Unexpected null receipt after withTimeout completed');
+      }
+
+      return receipt;
     }
 
     // biome-ignore lint/suspicious/noExplicitAny: copied from viem
