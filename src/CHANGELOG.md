@@ -1,5 +1,12 @@
 # @gelatocloud/gasless
 
+## 0.0.7
+
+### Patch Changes
+
+- 8e99330: refactor: use receipt type from viem
+- 61a0e67: fix: sendUserOperationSync fallback timeout
+
 ## 0.0.6
 
 ### Patch Changes
