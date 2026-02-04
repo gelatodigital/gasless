@@ -44,6 +44,7 @@ export type GelatoEvmRelayerClientConfig = {
   timeout?: number;
   testnet?: boolean;
   baseUrl?: string;
+  httpTransportConfig?: HttpTransportConfig;
 };
 
 export const createGelatoEvmRelayerClient = (
@@ -52,9 +53,12 @@ export const createGelatoEvmRelayerClient = (
   const { apiKey, testnet, baseUrl, timeout, pollingInterval } = parameters;
 
   const config: HttpTransportConfig = {
+    ...parameters.httpTransportConfig,
     fetchOptions: {
+      ...parameters.httpTransportConfig?.fetchOptions,
       headers: {
-        'X-API-Key': apiKey
+        'X-API-Key': apiKey,
+        ...parameters.httpTransportConfig?.fetchOptions?.headers
       }
     }
   };
