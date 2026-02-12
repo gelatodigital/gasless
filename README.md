@@ -14,6 +14,7 @@
 - **2D nonce support** - Advanced nonce management using both `nonce` and `nonceKey` for parallelized execution.
 - **Type-safe** - Implemented on top of [viem](https://viem.sh), offering complete TypeScript type safety and developer ergonomics.
 - **Synchronous methods**: Send transaction and get the receipt in a single call
+- **WebSockets**: Live notifications and updates via WebSockets
 
 ### Learn more in our [docs](https://docs.gelato.cloud)
 
@@ -190,6 +191,70 @@ const { receipt } = await bundler.waitForUserOperationReceipt({ hash });
 console.log(`Transaction hash: ${receipt.transactionHash}`);
 ```
 
+### WebSocket Subscriptions
+
+WebSockets are enabled by default. Methods automatically race WebSocket notifications against HTTP polling for the fastest result. To disable:
+
+```typescript
+const relayer = createGelatoEvmRelayerClient({
+  apiKey: process.env.GELATO_API_KEY,
+  ws: { disable: true }
+});
+```
+
+**Relayer — single transaction:**
+```typescript
+const id = await relayer.sendTransaction({
+  chainId: baseSepolia.id,
+  to: '0xTargetContract...',
+  data: '0xCalldata...'
+});
+
+const subscription = await relayer.ws.subscribe({ id });
+
+subscription.on('success', (data) => {
+  console.log(`Included in block ${data.receipt.blockNumber}`);
+});
+
+subscription.on('reverted', (data) => {
+  console.log(`Reverted: ${data.receipt.blockNumber}`);
+});
+
+// Cleanup when done
+await relayer.ws.unsubscribe(subscription.subscriptionId);
+relayer.ws.disconnect();
+```
+
+**Relayer — global (all transactions):**
+```typescript
+const subscription = await relayer.ws.subscribe();
+
+subscription.on('submitted', (data) => console.log(`${data.id} submitted`));
+subscription.on('success', (data) => console.log(`${data.id} success`));
+subscription.on('rejected', (data) => console.log(`${data.id} rejected`));
+```
+
+**Bundler** — same patterns apply via `bundler.ws`:
+```typescript
+const subscription = await bundler.ws.subscribe({ id: userOpHash });
+subscription.on('success', (data) => console.log(data.receipt));
+```
+
+**Events:**
+
+| Event | Description |
+|-------------|-------------------------------------|
+| `pending` | Transaction pending |
+| `submitted` | Submitted to network |
+| `success` | Successfully included on-chain |
+| `rejected` | Rejected by relayer |
+| `reverted` | Reverted on-chain |
+
+**Cleanup:**
+```typescript
+await relayer.ws.unsubscribe(subscription.subscriptionId);
+relayer.ws.disconnect();
+```
 
 ## API Reference
 
@@ -508,6 +573,9 @@ See the [`/examples`](./examples) directory for complete working examples:
 - [`examples/relayer/sponsored`](./examples/relayer/sponsored) - Direct relayer usage
 - [`examples/account/sponsored`](./examples/account/sponsored) - Gelato smart account
 - [`examples/bundler/sponsored`](./examples/bundler/sponsored) - ERC-4337 bundler
+- [`examples/relayer/ws`](./examples/relayer/ws) - Relayer WebSocket usage
+- [`examples/bundler/ws`](./examples/bundler/ws) - Bundler WebSocket usage
+- [`examples/account/ws`](./examples/account/ws) - Account WebSocket usage
 
 Run an example:
 

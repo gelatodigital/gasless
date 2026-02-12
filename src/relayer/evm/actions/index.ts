@@ -6,4 +6,3 @@ export * from './getStatus.js';
 export * from './sendTransaction.js';
 export * from './sendTransactionSync.js';
 export * from './waitForReceipt.js';
-export * from './waitForStatus.js';

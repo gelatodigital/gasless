@@ -32,12 +32,15 @@
     "README.md"
   ],
   "dependencies": {
+    "isomorphic-ws": "^5.0.0",
+    "ws": "^8.19.0",
     "zod": "catalog:"
   },
   "peerDependencies": {
     "viem": "catalog:"
   },
   "devDependencies": {
+    "@types/ws": "^8.18.1",
     "typescript": "catalog:",
     "viem": "catalog:",
     "zod": "catalog:"

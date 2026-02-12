@@ -5,6 +5,7 @@ import {
   type FeeQuote,
   type GelatoEvmRelayerClient
 } from '../relayer/index.js';
+import type { WebSocketConfig } from '../ws/index.js';
 import {
   type GetFeeQuoteParameters,
   getFeeQuote,
@@ -19,7 +20,7 @@ export * from './adapters/index.js';
 
 export type GelatoSmartAccountClient = Pick<
   GelatoEvmRelayerClient,
-  'getCapabilities' | 'getStatus' | 'waitForReceipt' | 'waitForStatus'
+  'getCapabilities' | 'getStatus' | 'waitForReceipt' | 'ws'
 > & {
   sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
   sendTransactionSync: (parameters: SendTransactionSyncParameters) => Promise<TransactionReceipt>;
@@ -30,17 +31,19 @@ export type GelatoSmartAccountClientConfig = {
   apiKey: string;
   account: SmartAccount<GelatoSmartAccountImplementation>;
   baseUrl?: string;
+  ws?: Omit<WebSocketConfig, 'apiKey' | 'baseUrl'>;
 };
 
 export const createGelatoSmartAccountClient = async (
   parameters: GelatoSmartAccountClientConfig
 ): Promise<GelatoSmartAccountClient> => {
-  const { account, apiKey, baseUrl } = parameters;
+  const { account, apiKey, baseUrl, ws: wsConfig } = parameters;
 
   const client = createGelatoEvmRelayerClient({
     apiKey,
     baseUrl,
-    testnet: account.chain.testnet ?? false
+    testnet: account.chain.testnet ?? false,
+    ws: wsConfig
   });
 
   const capabilities = (await client.getCapabilities())[account.chain.id];
@@ -56,6 +59,6 @@ export const createGelatoSmartAccountClient = async (
     sendTransaction: (parameters) => sendTransaction(client, account, parameters),
     sendTransactionSync: (parameters) => sendTransactionSync(client, account, parameters),
     waitForReceipt: (parameters) => client.waitForReceipt(parameters),
-    waitForStatus: (parameters) => client.waitForStatus(parameters)
+    ws: client.ws
   };
 };

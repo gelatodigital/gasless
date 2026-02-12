@@ -9,7 +9,10 @@
     "bundler-gelato-sponsored-payment",
     "bundler-kernel-sponsored-payment",
     "relayer-sponsored-payment",
-    "account-sponsored-payment"
+    "account-sponsored-payment",
+    "account-ws",
+    "relayer-ws",
+    "bundler-ws"
   ],
   "linked": [],
   "updateInternalDependencies": "patch"

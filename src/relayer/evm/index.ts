@@ -1,6 +1,11 @@
 import { type Hex, type HttpTransportConfig, http, type TransactionReceipt } from 'viem';
 import { GELATO_PROD_API, GELATO_STAGING_API } from '../../constants/index.js';
-import type { Status, TerminalStatus } from '../../types/index.js';
+import type { Status } from '../../types/index.js';
+import {
+  createWebSocketManager,
+  type WebSocketConfig,
+  type WebSocketManager
+} from '../../ws/index.js';
 import {
   type Capabilities,
   type FeeData,
@@ -19,9 +24,8 @@ import {
   type SendTransactionSyncParameters,
   sendTransaction,
   sendTransactionSync,
-  type WaitForStatusParameters,
-  waitForReceipt,
-  waitForStatus
+  type WaitForReceiptParameters,
+  waitForReceipt
 } from './actions/index.js';
 
 export * from './actions/index.js';
@@ -32,10 +36,10 @@ export type GelatoEvmRelayerClient = {
   getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
   getGelatoStatus: (parameters: GetGelatoStatusParameters) => Promise<GelatoStatus>;
   getStatus: (parameters: GetStatusParameters) => Promise<Status>;
-  waitForReceipt: (parameters: WaitForStatusParameters) => Promise<TransactionReceipt>;
-  waitForStatus: (parameters: WaitForStatusParameters) => Promise<TerminalStatus>;
+  waitForReceipt: (parameters: WaitForReceiptParameters) => Promise<TransactionReceipt>;
   sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
   sendTransactionSync: (parameters: SendTransactionSyncParameters) => Promise<TransactionReceipt>;
+  ws: WebSocketManager<TransactionReceipt>;
 };
 
 export type GelatoEvmRelayerClientConfig = {
@@ -45,12 +49,13 @@ export type GelatoEvmRelayerClientConfig = {
   testnet?: boolean;
   baseUrl?: string;
   httpTransportConfig?: HttpTransportConfig;
+  ws?: Omit<WebSocketConfig, 'apiKey' | 'baseUrl'>;
 };
 
 export const createGelatoEvmRelayerClient = (
   parameters: GelatoEvmRelayerClientConfig
 ): GelatoEvmRelayerClient => {
-  const { apiKey, testnet, baseUrl, timeout, pollingInterval } = parameters;
+  const { apiKey, testnet, baseUrl, timeout, pollingInterval, ws: wsConfig } = parameters;
 
   const config: HttpTransportConfig = {
     ...parameters.httpTransportConfig,
@@ -67,6 +72,17 @@ export const createGelatoEvmRelayerClient = (
 
   const client = http(`${base}/rpc`, config)({});
 
+  // Create WebSocket manager (lazy connect on first use)
+  const ws = createWebSocketManager<TransactionReceipt>({
+    apiKey,
+    baseUrl: base,
+    heartbeatTimeout: 60000,
+    maxReconnectAttempts: 5,
+    reconnect: true,
+    reconnectInterval: 1000,
+    ...wsConfig
+  });
+
   return {
     getCapabilities: () => getCapabilities(client),
     getFeeData: (parameters) => getFeeData(client, parameters),
@@ -78,19 +94,16 @@ export const createGelatoEvmRelayerClient = (
       sendTransactionSync(client, {
         ...params,
         pollingInterval: params.pollingInterval ?? pollingInterval,
-        timeout: params.timeout ?? timeout
+        timeout: params.timeout ?? timeout,
+        ws
       }),
     waitForReceipt: (params) =>
       waitForReceipt(client, {
         ...params,
         pollingInterval: params.pollingInterval ?? pollingInterval,
-        timeout: params.timeout ?? timeout
+        timeout: params.timeout ?? timeout,
+        ws
       }),
-    waitForStatus: (params) =>
-      waitForStatus(client, {
-        ...params,
-        pollingInterval: params.pollingInterval ?? pollingInterval,
-        timeout: params.timeout ?? timeout
-      })
+    ws
   };
 };

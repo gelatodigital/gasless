@@ -1,4 +1,4 @@
-import type { BaseError, Chain, Client, Transport } from 'viem';
+import type { BaseError, Chain, Client, Hex, Transport } from 'viem';
 import {
   formatUserOperationReceipt,
   formatUserOperationRequest,
@@ -13,14 +13,103 @@ import {
 } from 'viem/account-abstraction';
 import { parseAccount } from 'viem/accounts';
 import { AccountNotFoundError } from '../../types/index.js';
+import { TransactionRejectedError } from '../../utils/errors.js';
 import { retrieveIdFromError } from '../../utils/index.js';
 import { withTimeout } from '../../utils/withTimeout.js';
+import { WebSocketTimeoutError } from '../../ws/errors.js';
+import type { WebSocketManager } from '../../ws/types.js';
 import { prepareUserOperation } from './prepareUserOperation.js';
 
 export type SendUserOperationSyncParameters = SendUserOperationParameters & {
   timeout?: number;
   requestTimeout?: number;
   pollingInterval?: number;
+  usePolling?: boolean;
+  ws?: WebSocketManager<UserOperationReceipt>;
+};
+
+/**
+ * Wait for user operation receipt using WebSocket
+ * @internal
+ */
+const waitForReceiptWebSocket = async (
+  wsManager: WebSocketManager<UserOperationReceipt>,
+  hash: Hex,
+  timeout: number
+): Promise<UserOperationReceipt> => {
+  const subscription = await wsManager.subscribe({ id: hash });
+
+  try {
+    const result = await new Promise<UserOperationReceipt>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new WebSocketTimeoutError(`Timeout waiting for receipt for user operation ${hash}`));
+      }, timeout);
+
+      subscription.on('success', (data) => {
+        clearTimeout(timer);
+        resolve(data.receipt);
+      });
+      subscription.on('reverted', (data) => {
+        clearTimeout(timer);
+        resolve(data.receipt);
+      });
+      subscription.on('rejected', (data) => {
+        clearTimeout(timer);
+        reject(
+          new TransactionRejectedError({
+            chainId: data.chainId,
+            createdAt: data.createdAt,
+            errorData: data.data,
+            errorMessage: data.message,
+            id: hash
+          })
+        );
+      });
+    });
+
+    return result;
+  } finally {
+    await wsManager.unsubscribe(subscription.subscriptionId);
+  }
+};
+
+/**
+ * Wait for user operation receipt using HTTP polling
+ * @internal
+ */
+const waitForReceiptPolling = async <account extends SmartAccount | undefined>(
+  client: Client<Transport, Chain | undefined, account>,
+  hash: Hex,
+  timeout: number,
+  pollingInterval: number
+): Promise<UserOperationReceipt> => {
+  const receipt = await withTimeout(
+    async () => {
+      try {
+        return await getUserOperationReceipt(client, { hash });
+      } catch (error) {
+        // If receipt not found, return null to continue polling
+        if (error instanceof UserOperationReceiptNotFoundError) {
+          return null;
+        }
+        // Other errors propagate immediately
+        throw error;
+      }
+    },
+    {
+      pollingInterval,
+      shouldContinue: (receipt) => receipt === null,
+      timeout,
+      timeoutErrorMessage: `Timeout waiting for user operation receipt: ${hash}`
+    }
+  );
+
+  // Type guard: receipt should never be null after withTimeout completes
+  if (!receipt) {
+    throw new Error('Unexpected null receipt after withTimeout completed');
+  }
+
+  return receipt;
 };
 
 export const sendUserOperationSync = async <account extends SmartAccount | undefined>(
@@ -33,7 +122,9 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
     entryPointAddress,
     timeout = 120000,
     requestTimeout,
-    pollingInterval = client.pollingInterval
+    pollingInterval = client.pollingInterval,
+    usePolling,
+    ws
   } = parameters;
 
   if (!account_ && !parameters.sender) throw new AccountNotFoundError();
@@ -74,34 +165,22 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
   } catch (error) {
     const id = retrieveIdFromError(error);
     if (id) {
-      // Wrap getUserOperationReceipt with withTimeout for proper timeout handling
-      const receipt = await withTimeout(
-        async () => {
-          try {
-            return await getUserOperationReceipt(client, { hash: id });
-          } catch (error) {
-            // If receipt not found, return null to continue polling
-            if (error instanceof UserOperationReceiptNotFoundError) {
-              return null;
-            }
-            // Other errors propagate immediately
-            throw error;
-          }
-        },
-        {
-          pollingInterval,
-          shouldContinue: (receipt) => receipt === null,
-          timeout,
-          timeoutErrorMessage: `Timeout waiting for user operation receipt: ${id}`
-        }
-      );
+      // Cast to Hex since retrieveIdFromError returns string but it's always a hash
+      const hash = id as Hex;
 
-      // Type guard: receipt should never be null after withTimeout completes
-      if (!receipt) {
-        throw new Error('Unexpected null receipt after withTimeout completed');
+      // Use WebSocket if available and not explicitly disabled
+      const shouldUseWebSocket = ws && !usePolling;
+
+      if (!shouldUseWebSocket) {
+        return await waitForReceiptPolling(client, hash, timeout, pollingInterval);
       }
 
-      return receipt;
+      // Race WebSocket vs HTTP polling
+      // Both start simultaneously, fastest wins
+      return Promise.race([
+        waitForReceiptWebSocket(ws, hash, timeout),
+        waitForReceiptPolling(client, hash, timeout, Math.max(2_000, pollingInterval))
+      ]);
     }
 
     // biome-ignore lint/suspicious/noExplicitAny: copied from viem

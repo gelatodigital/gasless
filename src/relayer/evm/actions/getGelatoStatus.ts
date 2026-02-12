@@ -23,25 +23,33 @@ const finalizedStatusSchema = baseStatusSchema.extend({
   status: z.literal(GelatoStatusCode.Finalized)
 });
 
+export const relayerSuccessStatusSchema = successStatusSchema.extend({
+  receipt: transactionReceiptSchema
+});
+
+export const relayerRevertedStatusSchema = revertedStatusSchema.extend({
+  receipt: transactionReceiptSchema
+});
+
 export const gelatoTerminalStatusSchema = z.discriminatedUnion('status', [
   finalizedStatusSchema,
   rejectedStatusSchema,
-  revertedStatusSchema
+  relayerRevertedStatusSchema
 ]);
 
 export const gelatoStatusSchema = z.discriminatedUnion('status', [
   pendingStatusSchema,
   submittedStatusSchema,
-  successStatusSchema,
+  relayerSuccessStatusSchema,
   finalizedStatusSchema,
   rejectedStatusSchema,
-  revertedStatusSchema
+  relayerRevertedStatusSchema
 ]);
 
 export type GelatoTerminalStatus =
   | z.infer<typeof finalizedStatusSchema>
   | z.infer<typeof rejectedStatusSchema>
-  | z.infer<typeof revertedStatusSchema>;
+  | z.infer<typeof relayerRevertedStatusSchema>;
 
 export type GelatoStatus = z.infer<typeof gelatoStatusSchema>;
 
