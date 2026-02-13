@@ -101,7 +101,7 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
     account: account_ = client.account,
     entryPointAddress,
     timeout = 120000,
-    requestTimeout,
+    requestTimeout = 10000,
     pollingInterval = client.pollingInterval,
     usePolling,
     ws
@@ -135,7 +135,10 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
           rpcParameters,
           // biome-ignore lint/style/noNonNullAssertion: copied from viem
           (entryPointAddress ?? account?.entryPoint?.address)!,
-          { timeout: requestTimeout }
+          // Always select the minimum timeout, either the http client timeout or the request timeout
+          // The request timeout must always be greater so we can then parse the transaction id from the error
+          // Otherwise the the http client will timeout locally
+          { timeout: Math.min(requestTimeout, (client.transport.timeout ?? 10000) - 1000) }
         ]
       } as never,
       { retryCount: 0 }

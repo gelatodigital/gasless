@@ -3,9 +3,9 @@ import type { SmartAccount } from 'viem/account-abstraction';
 import {
   createGelatoEvmRelayerClient,
   type FeeQuote,
-  type GelatoEvmRelayerClient
+  type GelatoEvmRelayerClient,
+  type GelatoEvmRelayerClientConfig
 } from '../relayer/index.js';
-import type { WebSocketConfig } from '../ws/index.js';
 import {
   type GetFeeQuoteParameters,
   getFeeQuote,
@@ -27,23 +27,18 @@ export type GelatoSmartAccountClient = Pick<
   getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
 };
 
-export type GelatoSmartAccountClientConfig = {
-  apiKey: string;
+export type GelatoSmartAccountClientConfig = GelatoEvmRelayerClientConfig & {
   account: SmartAccount<GelatoSmartAccountImplementation>;
-  baseUrl?: string;
-  ws?: Omit<WebSocketConfig, 'apiKey' | 'baseUrl'>;
 };
 
 export const createGelatoSmartAccountClient = async (
   parameters: GelatoSmartAccountClientConfig
 ): Promise<GelatoSmartAccountClient> => {
-  const { account, apiKey, baseUrl, ws: wsConfig } = parameters;
+  const { account } = parameters;
 
   const client = createGelatoEvmRelayerClient({
-    apiKey,
-    baseUrl,
-    testnet: account.chain.testnet ?? false,
-    ws: wsConfig
+    testnet: parameters.testnet ?? account.chain.testnet ?? false,
+    ...parameters
   });
 
   const capabilities = (await client.getCapabilities())[account.chain.id];

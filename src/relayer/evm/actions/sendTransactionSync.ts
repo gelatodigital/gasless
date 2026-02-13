@@ -41,8 +41,8 @@ export const sendTransactionSync = async (
     to,
     context,
     authorizationList,
-    timeout,
-    requestTimeout,
+    timeout = 120000,
+    requestTimeout = 10000,
     ws,
     throwOnReverted = false
   } = parameters;
@@ -58,7 +58,10 @@ export const sendTransactionSync = async (
           chainId: chainId.toString(),
           context,
           data,
-          timeout: requestTimeout,
+          // Always select the minimum timeout, either the http client timeout or the request timeout
+          // The request timeout must always be greater so we can then parse the transaction id from the error
+          // Otherwise the the http client will timeout locally
+          timeout: Math.min(requestTimeout, (client.config.timeout ?? 10000) - 1000),
           to
         }
       },

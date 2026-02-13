@@ -1,4 +1,4 @@
-import { type Chain, type Client, http, type Transport } from 'viem';
+import { type Chain, type Client, type HttpTransportConfig, http, type Transport } from 'viem';
 import {
   type BundlerActions,
   type BundlerClient,
@@ -57,6 +57,7 @@ export type GelatoBundlerClientConfig = Omit<BundlerClientConfig, 'transport' | 
   baseUrl?: string;
   /** WebSocket configuration options */
   ws?: Omit<WebSocketConfig, 'apiKey' | 'baseUrl'>;
+  httpTransportConfig?: HttpTransportConfig;
 };
 
 export const createGelatoBundlerClient = async (
@@ -75,9 +76,16 @@ export const createGelatoBundlerClient = async (
   const transport = http(endpoint, {
     fetchOptions: {
       headers: {
-        'X-API-Key': apiKey
-      }
-    }
+        'X-API-Key': apiKey,
+        ...parameters.httpTransportConfig?.fetchOptions?.headers
+      },
+      ...parameters.httpTransportConfig?.fetchOptions
+    },
+    // Unless overriden, increase http timeout to 15s due to sync methods
+    // We want the sync methods to timeout on the server not on the client
+    // Default for sync methods is 10s
+    timeout: 15_000,
+    ...parameters.httpTransportConfig
   });
 
   const client = createBundlerClient({

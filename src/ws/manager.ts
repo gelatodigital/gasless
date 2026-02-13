@@ -114,8 +114,6 @@ export function createWebSocketManager<TReceipt>(
    * Triggers reconnection unless explicitly disabled or auth error
    */
   const handleClose = (event: { code: number; reason: string }): void => {
-    // biome-ignore lint/suspicious/noConsole: ws close
-    console.warn(`[WebSocket] Closed: ${event.code} - ${event.reason}`);
     if (heartbeatTimer) {
       clearTimeout(heartbeatTimer);
     }
@@ -207,8 +205,6 @@ export function createWebSocketManager<TReceipt>(
       });
 
       ws.onopen = () => {
-        // biome-ignore lint/suspicious/noConsole: opened connection
-        console.log(`[WebSocket] Connection opened`);
         reconnectAttempts = 0;
         isConnecting = false;
         setupHeartbeat();

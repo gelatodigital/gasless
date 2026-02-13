@@ -58,13 +58,17 @@ export const createGelatoEvmRelayerClient = (
   const { apiKey, testnet, baseUrl, timeout, pollingInterval, ws: wsConfig } = parameters;
 
   const config: HttpTransportConfig = {
+    // Unless overriden, increase http timeout to 15s due to sync methods
+    // We want the sync methods to timeout on the server not on the client
+    // Default for sync methods is 10s
+    timeout: timeout ?? 15_000,
     ...parameters.httpTransportConfig,
     fetchOptions: {
-      ...parameters.httpTransportConfig?.fetchOptions,
       headers: {
         'X-API-Key': apiKey,
         ...parameters.httpTransportConfig?.fetchOptions?.headers
-      }
+      },
+      ...parameters.httpTransportConfig?.fetchOptions
     }
   };
 
@@ -90,18 +94,18 @@ export const createGelatoEvmRelayerClient = (
     getGelatoStatus: (parameters) => getGelatoStatus(client, parameters),
     getStatus: (parameters) => getStatus(client, parameters),
     sendTransaction: (parameters) => sendTransaction(client, parameters),
-    sendTransactionSync: (params) =>
+    sendTransactionSync: (parameters) =>
       sendTransactionSync(client, {
-        ...params,
-        pollingInterval: params.pollingInterval ?? pollingInterval,
-        timeout: params.timeout ?? timeout,
+        ...parameters,
+        pollingInterval: parameters.pollingInterval ?? pollingInterval,
+        timeout: parameters.timeout ?? timeout,
         ws
       }),
-    waitForReceipt: (params) =>
+    waitForReceipt: (parameters) =>
       waitForReceipt(client, {
-        ...params,
-        pollingInterval: params.pollingInterval ?? pollingInterval,
-        timeout: params.timeout ?? timeout,
+        ...parameters,
+        pollingInterval: parameters.pollingInterval ?? pollingInterval,
+        timeout: parameters.timeout ?? timeout,
         ws
       }),
     ws
