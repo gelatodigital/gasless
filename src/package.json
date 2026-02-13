@@ -26,7 +26,10 @@
   "scripts": {
     "prebuild": "node -p \"'export const version = ' + JSON.stringify(require('./package.json').version)\" > version.ts",
     "build": "tsc --project ./tsconfig.build.json",
-    "prepublishOnly": "cp ../README.md ."
+    "prepublishOnly": "cp ../README.md .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "files": [
     "_dist",
@@ -42,8 +45,10 @@
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "^4.0.18",
     "typescript": "catalog:",
     "viem": "catalog:",
+    "vitest": "^4.0.18",
     "zod": "catalog:"
   }
 }

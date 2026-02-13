@@ -34,8 +34,7 @@ const main = async () => {
   );
   subscription.on('success', (data) =>
     console.log(
-      `[success] Transaction ${data.id} succeded and was included in block ${data.receipt.blockNumber}`,
-      data.receipt
+      `[success] Transaction ${data.id} succeded and was included in block ${data.receipt.blockNumber}`
     )
   );
   subscription.on('rejected', (data) =>

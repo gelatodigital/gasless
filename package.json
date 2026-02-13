@@ -16,7 +16,8 @@
     "prepare": "lefthook install",
     "changeset:publish": "pnpm build && changeset publish",
     "changeset:version": "changeset version && pnpm biome:format",
-    "clean": "pnpm -r clean"
+    "clean": "pnpm -r clean",
+    "test": "pnpm -r test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.2",
