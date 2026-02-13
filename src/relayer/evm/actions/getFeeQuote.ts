@@ -1,6 +1,7 @@
 import type { Address, Transport } from 'viem';
 import { z } from 'zod';
 import { evmTokenSchema } from '../../../types/index.js';
+import { handleRpcError } from '../../../utils/index.js';
 
 const feeQuote = z.object({
   chainId: z.coerce.number(),
@@ -24,16 +25,19 @@ export const getFeeQuote = async (
   parameters: GetFeeQuoteParameters
 ): Promise<FeeQuote> => {
   const { chainId, gas, l1Fee, token } = parameters;
+  try {
+    const result = await client.request({
+      method: 'relayer_getFeeQuote',
+      params: {
+        chainId: chainId.toString(),
+        gas: gas.toString(),
+        l1Fee: l1Fee ? l1Fee.toString() : undefined,
+        token
+      }
+    });
 
-  const result = await client.request({
-    method: 'relayer_getFeeQuote',
-    params: {
-      chainId: chainId.toString(),
-      gas: gas.toString(),
-      l1Fee: l1Fee ? l1Fee.toString() : undefined,
-      token
-    }
-  });
-
-  return feeQuote.parse(result);
+    return feeQuote.parse(result);
+  } catch (error) {
+    handleRpcError(error);
+  }
 };

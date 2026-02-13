@@ -6,6 +6,9 @@ import type { SendTransactionParameters } from './sendTransaction.js';
 
 export type SendTransactionSyncParameters = SendTransactionParameters & {
   timeout?: number;
+  requestTimeout?: number;
+  pollingInterval?: number;
+  usePolling?: boolean;
 };
 
 export const sendTransactionSync = async (
@@ -26,6 +29,7 @@ export const sendTransactionSync = async (
   ]);
 
   return await client.sendTransactionSync({
+    ...parameters,
     authorizationList,
     chainId: account.chain.id,
     data,

@@ -30,9 +30,6 @@
   },
   "packageManager": "pnpm@10.15.0",
   "pnpm": {
-    "overrides": {
-      "@gelatocloud/gasless": "workspace:*"
-    },
     "peerDependencyRules": {
       "allowedVersions": {
         "@gelatocloud/gasless": "*"
@@ -42,5 +39,20 @@
       "@biomejs/biome",
       "lefthook"
     ]
+  },
+  "overrides": {
+    "@gelatocloud/gasless": "workspace:*"
+  },
+  "workspaces": {
+    "packages": [
+      "examples/**",
+      "src"
+    ],
+    "catalog": {
+      "permissionless": "0.3.2",
+      "typescript": "5.9.3",
+      "viem": "^2.0.0",
+      "zod": "4.1.13"
+    }
   }
 }

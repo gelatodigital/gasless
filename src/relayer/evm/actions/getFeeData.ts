@@ -1,6 +1,7 @@
 import type { Address, Transport } from 'viem';
 import { z } from 'zod';
 import { evmTokenSchema } from '../../../types/index.js';
+import { handleRpcError } from '../../../utils/index.js';
 
 const feeDataSchema = z.object({
   chainId: z.coerce.number(),
@@ -23,14 +24,17 @@ export const getFeeData = async (
   parameters: GetFeeDataParameters
 ): Promise<FeeData> => {
   const { chainId, token } = parameters;
+  try {
+    const result = await client.request({
+      method: 'relayer_getFeeData',
+      params: {
+        chainId: chainId.toString(),
+        token
+      }
+    });
 
-  const result = await client.request({
-    method: 'relayer_getFeeData',
-    params: {
-      chainId: chainId.toString(),
-      token
-    }
-  });
-
-  return feeDataSchema.parse(result);
+    return feeDataSchema.parse(result);
+  } catch (error) {
+    handleRpcError(error);
+  }
 };

@@ -3,7 +3,8 @@ import type { SmartAccount } from 'viem/account-abstraction';
 import {
   createGelatoEvmRelayerClient,
   type FeeQuote,
-  type GelatoEvmRelayerClient
+  type GelatoEvmRelayerClient,
+  type GelatoEvmRelayerClientConfig
 } from '../relayer/index.js';
 import {
   type GetFeeQuoteParameters,
@@ -19,28 +20,25 @@ export * from './adapters/index.js';
 
 export type GelatoSmartAccountClient = Pick<
   GelatoEvmRelayerClient,
-  'getCapabilities' | 'getStatus' | 'waitForReceipt' | 'waitForStatus'
+  'getCapabilities' | 'getStatus' | 'waitForReceipt' | 'ws'
 > & {
   sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
   sendTransactionSync: (parameters: SendTransactionSyncParameters) => Promise<TransactionReceipt>;
   getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
 };
 
-export type GelatoSmartAccountClientConfig = {
-  apiKey: string;
+export type GelatoSmartAccountClientConfig = GelatoEvmRelayerClientConfig & {
   account: SmartAccount<GelatoSmartAccountImplementation>;
-  baseUrl?: string;
 };
 
 export const createGelatoSmartAccountClient = async (
   parameters: GelatoSmartAccountClientConfig
 ): Promise<GelatoSmartAccountClient> => {
-  const { account, apiKey, baseUrl } = parameters;
+  const { account } = parameters;
 
   const client = createGelatoEvmRelayerClient({
-    apiKey,
-    baseUrl,
-    testnet: account.chain.testnet ?? false
+    testnet: parameters.testnet ?? account.chain.testnet ?? false,
+    ...parameters
   });
 
   const capabilities = (await client.getCapabilities())[account.chain.id];
@@ -56,6 +54,6 @@ export const createGelatoSmartAccountClient = async (
     sendTransaction: (parameters) => sendTransaction(client, account, parameters),
     sendTransactionSync: (parameters) => sendTransactionSync(client, account, parameters),
     waitForReceipt: (parameters) => client.waitForReceipt(parameters),
-    waitForStatus: (parameters) => client.waitForStatus(parameters)
+    ws: client.ws
   };
 };

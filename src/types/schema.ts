@@ -1,4 +1,5 @@
 import { formatTransactionReceipt, getAddress, type Hex, type RpcTransactionReceipt } from 'viem';
+import { formatUserOperationReceipt, type RpcUserOperationReceipt } from 'viem/account-abstraction';
 import { z } from 'zod';
 
 const hexData32Pattern = /^0x([0-9a-fA-F][0-9a-fA-F]){32}$/;
@@ -35,6 +36,25 @@ export const baseStatusSchema = z.object({
   createdAt: z.number()
 });
 
+/**
+ * Receipt schema that handles both transaction and user operation receipts
+ * Transforms RPC receipts to formatted versions
+ * Used by WebSocket layer and generic endpoints
+ */
+export const receiptSchema = z
+  .custom<RpcTransactionReceipt | RpcUserOperationReceipt>()
+  .transform((receipt) => {
+    // Check if it's a user operation receipt by presence of userOpHash
+    if ('userOpHash' in receipt) {
+      return formatUserOperationReceipt(receipt as RpcUserOperationReceipt);
+    }
+    return formatTransactionReceipt(receipt as RpcTransactionReceipt);
+  });
+
+/**
+ * Relayer-specific receipt schema that only accepts transaction receipts
+ * Used by relayer endpoints to enforce TransactionReceipt type
+ */
 export const transactionReceiptSchema = z
   .custom<RpcTransactionReceipt>()
   .transform((receipt) => formatTransactionReceipt(receipt));
@@ -48,29 +68,34 @@ export enum StatusCode {
 }
 
 export const pendingStatusSchema = baseStatusSchema.extend({
+  id: z.string(),
   status: z.literal(StatusCode.Pending)
 });
 
 export const submittedStatusSchema = baseStatusSchema.extend({
   hash: hexData32Schema,
+  id: z.string(),
   status: z.literal(StatusCode.Submitted)
 });
 
 export const successStatusSchema = baseStatusSchema.extend({
-  receipt: transactionReceiptSchema,
+  id: z.string(),
+  receipt: receiptSchema,
   status: z.literal(StatusCode.Success)
 });
 
 export const rejectedStatusSchema = baseStatusSchema.extend({
   data: z.unknown().optional(),
+  id: z.string(),
   message: z.string(),
   status: z.literal(StatusCode.Rejected)
 });
 
 export const revertedStatusSchema = baseStatusSchema.extend({
   data: z.string(),
+  id: z.string(),
   message: z.string().optional(),
-  receipt: transactionReceiptSchema,
+  receipt: receiptSchema,
   status: z.literal(StatusCode.Reverted)
 });
 
