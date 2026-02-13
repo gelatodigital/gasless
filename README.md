@@ -71,7 +71,7 @@ const relayer = createGelatoEvmRelayerClient({
   testnet: true
 });
 
-// Send transaction (returns immediately with task ID)
+// Send transaction (returns immediately with ID)
 const id = await relayer.sendTransaction({
   chainId: baseSepolia.id,
   to: '0xTargetContract...',
@@ -132,7 +132,7 @@ import {
 
 // ... same setup as above ...
 
-// Send transaction (returns immediately with task ID)
+// Send transaction (returns immediately with ID)
 const id = await client.sendTransaction({
   calls: [{ to: '0xContract...', data: '0xCalldata...' }] });
 
@@ -249,6 +249,38 @@ subscription.on('success', (data) => console.log(data.receipt));
 ```typescript
 await relayer.ws.unsubscribe(subscription.subscriptionId);
 relayer.ws.disconnect();
+```
+
+## Sync vs Async
+
+The SDK offers two ways to send transactions:
+
+| | Sync (`sendTransactionSync`) | Async (`sendTransaction` + WS) |
+|---|---|---|
+| Returns | Final `TransactionReceipt` | ID (`Hex`) immediately |
+| Lifecycle events | None (handled internally) | All: `pending`, `submitted`, `success`, `rejected`, `reverted` |
+| Tx hash on (re)submission | Not exposed | `hash` field on every `submitted` event |
+| Control | Minimal — fire and forget | Full — react to each status change via WS subscription |
+
+**Sync** — call `sendTransactionSync` to send the transaction and get the receipt in the same call. If the transaction is not included, the SDK will handle it internally and return a final `TransactionReceipt` by racing http polls and ws updates. Simplest approach when you just need the result:
+
+```typescript
+const receipt = await relayer.sendTransactionSync({ chainId, to, data });
+```
+
+**Async** — call `sendTransaction` to get a ID immediately, then subscribe via WebSocket for granular status updates. **WS subscriptions give you full control over the transaction lifecycle** — you can react to resubmissions, display tx hashes to users in real time, handle rejections immediately, and more. The `submitted` event includes the transaction `hash` each time the relay (re)submits the transaction (e.g. with bumped gas):
+
+```typescript
+const id = await relayer.sendTransaction({ chainId, to, data });
+const subscription = await relayer.ws.subscribe({ id });
+
+subscription.on('submitted', (data) => {
+  console.log(`Tx hash: ${data.hash}`); // available on every (re)submission
+});
+
+subscription.on('success', (data) => {
+  console.log(`Confirmed in block ${data.receipt.blockNumber}`);
+});
 ```
 
 ## API Reference
