@@ -261,6 +261,7 @@ The SDK offers two ways to send transactions:
 | Lifecycle events | None (handled internally) | All: `pending`, `submitted`, `success`, `rejected`, `reverted` |
 | Tx hash on (re)submission | Not exposed | `hash` field on every `submitted` event |
 | Control | Minimal — fire and forget | Full — react to each status change via WS subscription |
+| Reorg Protection | None | Yes, a new update event is published |
 
 **Sync** — call `sendTransactionSync` to send the transaction and get the receipt in the same call. If the transaction is not included, the SDK will handle it internally and return a final `TransactionReceipt` by racing http polls and ws updates. Simplest approach when you just need the result:
 
