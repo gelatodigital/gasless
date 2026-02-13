@@ -2,6 +2,7 @@ import type { TransactionReceipt, Transport } from 'viem';
 import { StatusCode, terminalStatusSchema } from '../../../types/schema.js';
 import {
   formatAuthorization,
+  handleRpcError,
   retrieveIdFromError,
   TransactionRejectedError,
   TransactionRevertedError
@@ -90,7 +91,6 @@ export const sendTransactionSync = async (
 
     return output.receipt as TransactionReceipt;
   } catch (error) {
-    console.log('error', error.message);
     const id = retrieveIdFromError(error);
     if (id) {
       return waitForReceipt(client, {
@@ -101,6 +101,6 @@ export const sendTransactionSync = async (
       });
     }
 
-    throw error;
+    handleRpcError(error, { authorizationList, chainId, data, to });
   }
 };

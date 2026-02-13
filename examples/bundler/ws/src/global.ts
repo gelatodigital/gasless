@@ -68,7 +68,7 @@ const main = async () => {
   );
   subscription.on('success', (data) =>
     console.log(
-      `[success] User Operation ${data.id} succeded and was included in block ${data.receipt.blockNumber}`
+      `[success] User Operation ${data.id} succeded and was included in block ${data.receipt.receipt.blockNumber}`
     )
   );
   subscription.on('rejected', (data) =>
@@ -76,7 +76,7 @@ const main = async () => {
   );
   subscription.on('reverted', (data) =>
     console.log(
-      `[reverted] User Operation ${data.id} reverted on block ${data.receipt.blockNumber}`
+      `[reverted] User Operation ${data.id} reverted on block ${data.receipt.receipt.blockNumber}`
     )
   );
 

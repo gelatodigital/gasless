@@ -9,6 +9,7 @@ import {
   successStatusSchema,
   transactionReceiptSchema
 } from '../../../types/schema.js';
+import { handleRpcError } from '../../../utils/index.js';
 
 export enum GelatoStatusCode {
   Pending = 100,
@@ -63,10 +64,14 @@ export const getGelatoStatus = async (
 ): Promise<GelatoStatus> => {
   const { id } = parameters;
 
-  const result = await client.request({
-    method: 'gelato_getStatus',
-    params: { id }
-  });
+  try {
+    const result = await client.request({
+      method: 'gelato_getStatus',
+      params: { id }
+    });
 
-  return gelatoStatusSchema.parse(result);
+    return gelatoStatusSchema.parse(result);
+  } catch (error) {
+    handleRpcError(error);
+  }
 };
