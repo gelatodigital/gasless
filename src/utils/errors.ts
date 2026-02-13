@@ -447,12 +447,6 @@ export function retrieveIdFromSyncTimeoutError(error: unknown): Hex | undefined 
 
   const err = error as Record<string, unknown>;
 
-  // Only extract ID from timeout errors
-  const message = err['message'];
-  if (typeof message !== 'string' || !message.toLowerCase().includes('timeout')) {
-    return undefined;
-  }
-
   const data = err['data'] as string;
 
   // Validate that id/userOperationHash exists

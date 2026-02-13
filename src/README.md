@@ -72,14 +72,14 @@ const relayer = createGelatoEvmRelayerClient({
 });
 
 // Send transaction (returns immediately with task ID)
-const taskId = await relayer.sendTransaction({
+const id = await relayer.sendTransaction({
   chainId: baseSepolia.id,
   to: '0xTargetContract...',
   data: '0xCalldata...'
 });
 
 // Poll for status separately
-const receipt = await relayer.waitForReceipt({ id: taskId });
+const receipt = await relayer.waitForReceipt({ id });
 
 console.log(`Transaction hash: ${receipt.transactionHash}`);
 ```
@@ -133,11 +133,11 @@ import {
 // ... same setup as above ...
 
 // Send transaction (returns immediately with task ID)
-const taskId = await client.sendTransaction({
+const id = await client.sendTransaction({
   calls: [{ to: '0xContract...', data: '0xCalldata...' }] });
 
 // Poll for status separately
-const receipt = await client.waitForReceipt({ id: taskId });
+const receipt = await client.waitForReceipt({ id });
 
 console.log(`Transaction hash: ${receipt.transactionHash}`);
 ```
@@ -487,8 +487,8 @@ try {
 } catch (error) {
   if (error instanceof TransactionRevertedError) {
     console.error('Transaction reverted:', error.receipt.transactionHash);
-    console.error('Error message:', error.message);
-    console.error('Error data:', error.revertData);
+    console.error('Error message:', error.erroMessage);
+    console.error('Error data:', error.errorData);
     // Also available: error.id, error.chainId, error.createdAt
   }
 }
@@ -522,7 +522,7 @@ Properties on `SimulationFailedRpcError`: `revertData`, `params`, `code` (`4211`
 
 ### Automatic Fallback on Timeout
 
-When `sendTransactionSync` times out, it automatically falls back to polling for the transaction status. If you see a warning message like:
+When `sendTransactionSync` rpc request times out, the SDK automatically falls back to polling for the transaction status. If you see a warning message like:
 
 ```
 Transaction 0x... sync call timed out, falling back to polling for completion. DO NOT RETRY this transaction.
@@ -534,36 +534,10 @@ This means your transaction was successfully submitted but the sync method timed
 
 If a timeout occurs:
 1. **Wait for automatic fallback**: `sendTransactionSync` automatically polls after timeout
-2. **Check status manually**: Use `getStatus({ id })` to check if transaction is still processing
+2. **Check status manually**: Use `getStatus({ id })` to check if transaction is still processing if needed
 3. **Retry with longer timeout**: Increase `timeout` and call `waitForReceipt` again
 4. **Use async methods**: Switch to async pattern for more control
 
-```typescript
-try {
-  // Try with default 10s timeout
-  const receipt = await relayer.sendTransactionSync({
-    chainId: baseSepolia.id,
-    to: '0xTargetContract...',
-    data: '0xCalldata...',
-  });
-} catch (error) {
-  if (error instanceof TimeoutError) {
-    // Retry with 60s timeout
-    const taskId = await relayer.sendTransaction({
-      chainId: baseSepolia.id,
-      to: '0xTargetContract...',
-      data: '0xCalldata...',
-    });
-
-    const receipt = await relayer.waitForReceipt({
-      id: taskId,
-      timeout: 60000
-    });
-
-    console.log('Transaction completed:', receipt.transactionHash);
-  }
-}
-```
 
 ### Configuration Limits
 

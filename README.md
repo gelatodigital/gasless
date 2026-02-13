@@ -63,7 +63,7 @@ console.log(`Transaction hash: ${receipt.transactionHash}`);
 
 **Asynchronous:**
 ```typescript
-import { createGelatoEvmRelayerClient, StatusCode } from '@gelatocloud/gasless';
+import { createGelatoEvmRelayerClient } from '@gelatocloud/gasless';
 import { baseSepolia } from 'viem/chains';
 
 const relayer = createGelatoEvmRelayerClient({
@@ -72,18 +72,16 @@ const relayer = createGelatoEvmRelayerClient({
 });
 
 // Send transaction (returns immediately with task ID)
-const taskId = await relayer.sendTransaction({
+const id = await relayer.sendTransaction({
   chainId: baseSepolia.id,
   to: '0xTargetContract...',
   data: '0xCalldata...'
 });
 
 // Poll for status separately
-const { status, receipt } = await relayer.waitForStatus({ id: taskId });
+const receipt = await relayer.waitForReceipt({ id });
 
-if (status.status === StatusCode.Success) {
-  console.log(`Transaction hash: ${receipt.transactionHash}`);
-}
+console.log(`Transaction hash: ${receipt.transactionHash}`);
 ```
 
 ### Account (Gelato Smart Account)
@@ -130,21 +128,18 @@ console.log(`Transaction hash: ${receipt.transactionHash}`);
 ```typescript
 import {
   createGelatoSmartAccountClient,
-  toGelatoSmartAccount,
-  StatusCode } from '@gelatocloud/gasless';
+  toGelatoSmartAccount } from '@gelatocloud/gasless';
 
 // ... same setup as above ...
 
 // Send transaction (returns immediately with task ID)
-const taskId = await client.sendTransaction({
+const id = await client.sendTransaction({
   calls: [{ to: '0xContract...', data: '0xCalldata...' }] });
 
 // Poll for status separately
-const status = await client.waitForStatus({ id: taskId });
+const receipt = await client.waitForReceipt({ id });
 
-if (status.status === StatusCode.Success) {
-  console.log(`Transaction hash: ${status.receipt.transactionHash}`);
-}
+console.log(`Transaction hash: ${receipt.transactionHash}`);
 ```
 
 
@@ -276,10 +271,9 @@ const client = createGelatoEvmRelayerClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendTransaction` | `{ chainId, to, data, authorizationList?, context? }` | `Promise<Hex>` | Submit a transaction |
-| `sendTransactionSync` | `{ chainId, to, data, timeout?, pollingInterval?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
+| `sendTransactionSync` | `{ chainId, to, data, timeout?, pollingInterval?, throwOnReverted?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
-| `waitForStatus` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TerminalStatus>` | Wait for final status |
-| `waitForReceipt` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
+| `waitForReceipt` | `{ id: string, timeout?, pollingInterval?, throwOnReverted? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 | `getFeeData` | `{ chainId, gas, l1Fee? }` | `Promise<FeeData>` | Get network fee data |
 
@@ -314,10 +308,9 @@ const client = await createGelatoSmartAccountClient({
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `sendTransaction` | `{ calls, nonce?, nonceKey?}` | `Promise<Hex>` | Send transaction(s) |
-| `sendTransactionSync` | `{ calls, nonce?, nonceKey?, timeout?, pollingInterval?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
+| `sendTransactionSync` | `{ calls, nonce?, nonceKey?, timeout?, pollingInterval?, throwOnReverted?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
-| `waitForStatus` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TerminalStatus>` | Wait for final status |
-| `waitForReceipt` | `{ id: string, timeout?, pollingInterval? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
+| `waitForReceipt` | `{ id: string, timeout?, pollingInterval?, throwOnReverted? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 
 **Nonce Options:**
@@ -326,7 +319,7 @@ const client = await createGelatoSmartAccountClient({
 
 **Polling Configuration:**
 
-All synchronous methods (`sendTransactionSync`, `sendUserOperationSync`, `waitForStatus`, `waitForReceipt`) support customizable polling behavior:
+All synchronous methods (`sendTransactionSync`, `sendUserOperationSync`, `waitForReceipt`) support customizable polling behavior:
 
 - `timeout` (optional): Maximum wait time in milliseconds
   - Default: `120000` (2 minutes)
@@ -435,9 +428,7 @@ type Call = {
 ## Status Handling
 
 ```typescript
-import { StatusCode } from '@gelatocloud/gasless';
-
-const status = await client.waitForStatus({ id: hash });
+const status = await client.getStatus({ id: hash });
 
 switch (status.status) {
   case StatusCode.Success:
@@ -456,7 +447,7 @@ switch (status.status) {
 
 ### Timeout Errors
 
-Synchronous methods (`sendTransactionSync`, `waitForStatus`, `waitForReceipt`) throw `TimeoutError` when operations don't complete within the configured timeout:
+Synchronous methods (`sendTransactionSync`, `waitForReceipt`) throw `TimeoutError` when operations don't complete within the configured timeout:
 
 ```typescript
 import { TimeoutError } from '@gelatocloud/gasless';
@@ -479,9 +470,59 @@ try {
 }
 ```
 
+### Revert Handling
+
+By default, `sendTransactionSync` and `waitForReceipt` return the receipt even when a transaction reverts on-chain. Set `throwOnReverted: true` to throw a `TransactionRevertedError` instead:
+
+```typescript
+import { TransactionRevertedError } from '@gelatocloud/gasless';
+
+try {
+  const receipt = await relayer.sendTransactionSync({
+    chainId: baseSepolia.id,
+    to: '0xTargetContract...',
+    data: '0xCalldata...',
+    throwOnReverted: true
+  });
+} catch (error) {
+  if (error instanceof TransactionRevertedError) {
+    console.error('Transaction reverted:', error.receipt.transactionHash);
+    console.error('Error message:', error.erroMessage);
+    console.error('Error data:', error.errorData);
+    // Also available: error.id, error.chainId, error.createdAt
+  }
+}
+```
+
+Available on both relayer and account clients via `sendTransactionSync` and `waitForReceipt`. Properties on `TransactionRevertedError`: `receipt`, `id`, `chainId`, `createdAt`, `errorData`, `errorMessage`.
+
+### Simulation Errors
+
+When the relayer simulates a transaction before submission and the simulation reverts, a `SimulationFailedRpcError` is thrown with error code `4211`. This happens _before_ the transaction is sent on-chain:
+
+```typescript
+import { SimulationFailedRpcError } from '@gelatocloud/gasless';
+
+try {
+  const receipt = await relayer.sendTransactionSync({
+    chainId: baseSepolia.id,
+    to: '0xTargetContract...',
+    data: '0xCalldata...'
+  });
+} catch (error) {
+  if (error instanceof SimulationFailedRpcError) {
+    console.error('Simulation reverted:', error.message);
+    console.error('Revert data:', error.revertData);
+    // error.params contains the original { to, chainId, data } sent
+  }
+}
+```
+
+Properties on `SimulationFailedRpcError`: `revertData`, `params`, `code` (`4211`).
+
 ### Automatic Fallback on Timeout
 
-When `sendTransactionSync` times out, it automatically falls back to polling for the transaction status. If you see a warning message like:
+When `sendTransactionSync` rpc request times out, the SDK automatically falls back to polling for the transaction status. If you see a warning message like:
 
 ```
 Transaction 0x... sync call timed out, falling back to polling for completion. DO NOT RETRY this transaction.
@@ -493,36 +534,10 @@ This means your transaction was successfully submitted but the sync method timed
 
 If a timeout occurs:
 1. **Wait for automatic fallback**: `sendTransactionSync` automatically polls after timeout
-2. **Check status manually**: Use `getStatus({ id })` to check if transaction is still processing
-3. **Retry with longer timeout**: Increase `timeout` and call `waitForStatus` again
+2. **Check status manually**: Use `getStatus({ id })` to check if transaction is still processing if needed
+3. **Retry with longer timeout**: Increase `timeout` and call `waitForReceipt` again
 4. **Use async methods**: Switch to async pattern for more control
 
-```typescript
-try {
-  // Try with default 10s timeout
-  const receipt = await relayer.sendTransactionSync({
-    chainId: baseSepolia.id,
-    to: '0xTargetContract...',
-    data: '0xCalldata...',
-  });
-} catch (error) {
-  if (error instanceof TimeoutError) {
-    // Retry with 60s timeout
-    const taskId = await relayer.sendTransaction({
-      chainId: baseSepolia.id,
-      to: '0xTargetContract...',
-      data: '0xCalldata...',
-    });
-
-    const status = await relayer.waitForStatus({
-      id: taskId,
-      timeout: 60000
-    });
-
-    console.log('Transaction completed:', status);
-  }
-}
-```
 
 ### Configuration Limits
 
@@ -530,6 +545,9 @@ The SDK enforces the following limits to prevent denial of service:
 
 ```typescript
 import {
+  TimeoutError,
+  TransactionRevertedError,
+  SimulationFailedRpcError,
   MIN_TIMEOUT,
   MAX_TIMEOUT,
   MIN_POLLING_INTERVAL,

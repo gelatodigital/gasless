@@ -68,6 +68,7 @@ export const waitForReceipt = async (
 
   const result = shouldUseWebSocket
     ? await Promise.race([
+        // biome-ignore lint/style/noNonNullAssertion: asserted above
         waitForTerminalStatus(parameters.ws!, id, timeout) as Promise<TerminalStatus>,
         waitForReceiptPolling(client, {
           ...parameters,
