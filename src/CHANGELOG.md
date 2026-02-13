@@ -1,5 +1,11 @@
 # @gelatocloud/gasless
 
+## 0.0.8
+
+### Patch Changes
+
+- 07d0c7c: feat: ws
+
 ## 0.0.7
 
 ### Patch Changes
