@@ -13,7 +13,6 @@ export {
 } from './errors.js';
 // Re-export manager
 export { createWebSocketManager } from './manager.js';
-
 // Re-export types
 export type {
   HeartbeatMessage,
@@ -26,7 +25,10 @@ export type {
   StatusEventName,
   Subscription,
   SubscriptionParams,
+  TerminalStatusResult,
   WebSocketConfig,
   WebSocketManager,
   WebSocketMessage
 } from './types.js';
+// Re-export utilities
+export { waitForTerminalStatus } from './waitForTerminalStatus.js';

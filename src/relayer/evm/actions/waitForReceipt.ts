@@ -2,8 +2,8 @@ import type { TransactionReceipt, Transport } from 'viem';
 import { StatusCode, type TerminalStatus } from '../../../types/schema.js';
 import { TransactionRejectedError, TransactionRevertedError } from '../../../utils/errors.js';
 import { withTimeout } from '../../../utils/withTimeout.js';
-import { WebSocketTimeoutError } from '../../../ws/errors.js';
 import type { WebSocketManager } from '../../../ws/types.js';
+import { waitForTerminalStatus } from '../../../ws/waitForTerminalStatus.js';
 import { type GetStatusParameters, getStatus } from './getStatus.js';
 
 export type WaitForReceiptParameters = GetStatusParameters & {
@@ -12,47 +12,6 @@ export type WaitForReceiptParameters = GetStatusParameters & {
   usePolling?: boolean;
   ws?: WebSocketManager<TransactionReceipt>;
   throwOnReverted?: boolean;
-};
-
-/**
- * Wait for terminal status using WebSocket
- * @internal
- */
-const waitForReceiptWebSocket = async (
-  parameters: WaitForReceiptParameters
-): Promise<TerminalStatus> => {
-  const { id, timeout = 120000, ws } = parameters;
-
-  if (!ws) {
-    throw new Error('No websocket manager provided to wait for status!');
-  }
-
-  const subscription = await ws.subscribe({ id });
-
-  try {
-    return await new Promise<TerminalStatus>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        reject(
-          new WebSocketTimeoutError(`Timeout waiting for terminal status for transaction ${id}`)
-        );
-      }, timeout);
-
-      subscription.on('success', (data) => {
-        clearTimeout(timer);
-        resolve(data as TerminalStatus);
-      });
-      subscription.on('rejected', (data) => {
-        clearTimeout(timer);
-        resolve(data as TerminalStatus);
-      });
-      subscription.on('reverted', (data) => {
-        clearTimeout(timer);
-        resolve(data as TerminalStatus);
-      });
-    });
-  } finally {
-    await ws.unsubscribe(subscription.subscriptionId);
-  }
 };
 
 /**
@@ -98,16 +57,18 @@ export const waitForReceipt = async (
   client: ReturnType<Transport>,
   parameters: WaitForReceiptParameters
 ): Promise<TransactionReceipt> => {
-  const { usePolling, throwOnReverted = true } = parameters;
+  const { usePolling, throwOnReverted = false } = parameters;
 
   // Use WebSocket if available and not explicitly disabled
   const shouldUseWebSocket = parameters.ws && !usePolling;
 
   // Race WebSocket vs HTTP polling
   // Both start simultaneously, fastest wins
+  const { id, timeout = 120000 } = parameters;
+
   const result = shouldUseWebSocket
     ? await Promise.race([
-        waitForReceiptWebSocket(parameters),
+        waitForTerminalStatus(parameters.ws!, id, timeout) as Promise<TerminalStatus>,
         waitForReceiptPolling(client, {
           ...parameters,
           pollingInterval: parameters.pollingInterval

@@ -30,8 +30,8 @@ const main = async () => {
    */
   const receipt = await relayer.sendTransactionSync({
     chainId: chain.id,
-    data: '0xae7e8d81',
-    to: '0xe4DBDD6b9ccC0a9C41AC1c456886e86852D1e3a3'
+    data: '0xd09de08a',
+    to: '0xE27C1359cf02B49acC6474311Bd79d1f10b1f8De'
   });
 
   const end = Date.now();

@@ -13,11 +13,12 @@ import {
 } from 'viem/account-abstraction';
 import { parseAccount } from 'viem/accounts';
 import { AccountNotFoundError } from '../../types/index.js';
+import { StatusCode } from '../../types/schema.js';
 import { TransactionRejectedError } from '../../utils/errors.js';
-import { retrieveIdFromError } from '../../utils/index.js';
+import { retrieveIdFromSyncTimeoutError } from '../../utils/index.js';
 import { withTimeout } from '../../utils/withTimeout.js';
-import { WebSocketTimeoutError } from '../../ws/errors.js';
 import type { WebSocketManager } from '../../ws/types.js';
+import { waitForTerminalStatus } from '../../ws/waitForTerminalStatus.js';
 import { prepareUserOperation } from './prepareUserOperation.js';
 
 export type SendUserOperationSyncParameters = SendUserOperationParameters & {
@@ -37,40 +38,19 @@ const waitForReceiptWebSocket = async (
   hash: Hex,
   timeout: number
 ): Promise<UserOperationReceipt> => {
-  const subscription = await wsManager.subscribe({ id: hash });
+  const result = await waitForTerminalStatus(wsManager, hash, timeout);
 
-  try {
-    const result = await new Promise<UserOperationReceipt>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        reject(new WebSocketTimeoutError(`Timeout waiting for receipt for user operation ${hash}`));
-      }, timeout);
-
-      subscription.on('success', (data) => {
-        clearTimeout(timer);
-        resolve(data.receipt);
-      });
-      subscription.on('reverted', (data) => {
-        clearTimeout(timer);
-        resolve(data.receipt);
-      });
-      subscription.on('rejected', (data) => {
-        clearTimeout(timer);
-        reject(
-          new TransactionRejectedError({
-            chainId: data.chainId,
-            createdAt: data.createdAt,
-            errorData: data.data,
-            errorMessage: data.message,
-            id: hash
-          })
-        );
-      });
+  if (result.status === StatusCode.Rejected) {
+    throw new TransactionRejectedError({
+      chainId: result.chainId,
+      createdAt: result.createdAt,
+      errorData: result.data,
+      errorMessage: result.message,
+      id: hash
     });
-
-    return result;
-  } finally {
-    await wsManager.unsubscribe(subscription.subscriptionId);
   }
+
+  return result.receipt;
 };
 
 /**
@@ -163,9 +143,9 @@ export const sendUserOperationSync = async <account extends SmartAccount | undef
 
     return formatUserOperationReceipt(receipt);
   } catch (error) {
-    const id = retrieveIdFromError(error);
+    const id = retrieveIdFromSyncTimeoutError(error);
     if (id) {
-      // Cast to Hex since retrieveIdFromError returns string but it's always a hash
+      // Cast to Hex since retrieveIdFromSyncTimeoutError returns string but it's always a hash
       const hash = id as Hex;
 
       // Use WebSocket if available and not explicitly disabled

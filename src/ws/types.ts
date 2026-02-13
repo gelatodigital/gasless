@@ -106,6 +106,15 @@ export type StatusEventMap<TReceipt> = {
 };
 
 /**
+ * Terminal status result — the union of all terminal event types.
+ * Callers decide how to handle each status (success/rejected/reverted).
+ */
+export type TerminalStatusResult<TReceipt> =
+  | StatusEventMap<TReceipt>['success']
+  | StatusEventMap<TReceipt>['rejected']
+  | StatusEventMap<TReceipt>['reverted'];
+
+/**
  * Generic subscription interface (public API)
  * Simple event-based API with on/off handlers
  */

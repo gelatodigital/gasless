@@ -3,7 +3,7 @@ import { StatusCode, terminalStatusSchema } from '../../../types/schema.js';
 import {
   formatAuthorization,
   handleRpcError,
-  retrieveIdFromError,
+  retrieveIdFromSyncTimeoutError,
   TransactionRejectedError,
   TransactionRevertedError
 } from '../../../utils/index.js';
@@ -44,7 +44,7 @@ export const sendTransactionSync = async (
     timeout,
     requestTimeout,
     ws,
-    throwOnReverted = true
+    throwOnReverted = false
   } = parameters;
 
   try {
@@ -91,7 +91,7 @@ export const sendTransactionSync = async (
 
     return output.receipt as TransactionReceipt;
   } catch (error) {
-    const id = retrieveIdFromError(error);
+    const id = retrieveIdFromSyncTimeoutError(error);
     if (id) {
       return waitForReceipt(client, {
         id,

@@ -423,7 +423,7 @@ export class TransactionRevertedError extends GaslessBaseError {
 }
 
 /**
- * Extracts the transaction/operation ID from an error
+ * Extracts the transaction/operation ID from an sync timeout error
  *
  * Expected error structure:
  * ```json
@@ -439,7 +439,7 @@ export class TransactionRevertedError extends GaslessBaseError {
  * @param error - The error to check
  * @returns The ID of the transaction/operation or undefined if not found
  */
-export function retrieveIdFromError(error: unknown): Hex | undefined {
+export function retrieveIdFromSyncTimeoutError(error: unknown): Hex | undefined {
   // Type guard: check if error is an object
   if (typeof error !== 'object' || error === null) {
     return undefined;
@@ -447,10 +447,16 @@ export function retrieveIdFromError(error: unknown): Hex | undefined {
 
   const err = error as Record<string, unknown>;
 
+  // Only extract ID from timeout errors
+  const message = err['message'];
+  if (typeof message !== 'string' || !message.toLowerCase().includes('timeout')) {
+    return undefined;
+  }
+
   const data = err['data'] as string;
 
-  // Validate that id/userOperationHash exists and is a hex string (transaction/operation hash)
-  if (typeof data !== 'string' || data.length === 0 || !/^0x([0-9a-fA-F]{2})*$/.test(data)) {
+  // Validate that id/userOperationHash exists
+  if (typeof data !== 'string' || data.length === 0) {
     return undefined;
   }
 
