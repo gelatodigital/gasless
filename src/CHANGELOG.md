@@ -1,5 +1,11 @@
 # @gelatocloud/gasless
 
+## 0.0.9
+
+### Patch Changes
+
+- 713c379: feat: gas tank balance action
+
 ## 0.0.8
 
 ### Patch Changes
