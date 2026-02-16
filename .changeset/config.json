@@ -12,7 +12,9 @@
     "account-sponsored-payment",
     "account-ws",
     "relayer-ws",
-    "bundler-ws"
+    "bundler-ws",
+    "relayer-get-balance",
+    "bundler-get-balance"
   ],
   "linked": [],
   "updateInternalDependencies": "patch"

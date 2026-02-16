@@ -98,6 +98,13 @@ export function mockTransactionReceipt(): TransactionReceipt {
   } as TransactionReceipt;
 }
 
+// Balance response
+export const mockBalanceResponse = {
+  balance: 1000000000,
+  decimals: 6,
+  unit: 'usd'
+};
+
 // Capabilities response
 export const mockCapabilitiesResponse = {
   1: {
