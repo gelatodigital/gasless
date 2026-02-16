@@ -20,7 +20,7 @@ export * from './adapters/index.js';
 
 export type GelatoSmartAccountClient = Pick<
   GelatoEvmRelayerClient,
-  'getCapabilities' | 'getStatus' | 'waitForReceipt' | 'ws'
+  'getBalance' | 'getCapabilities' | 'getStatus' | 'waitForReceipt' | 'ws'
 > & {
   sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
   sendTransactionSync: (parameters: SendTransactionSyncParameters) => Promise<TransactionReceipt>;
@@ -48,6 +48,7 @@ export const createGelatoSmartAccountClient = async (
   }
 
   return {
+    getBalance: () => client.getBalance(),
     getCapabilities: () => client.getCapabilities(),
     getFeeQuote: (parameters) => getFeeQuote(client, account, parameters),
     getStatus: (parameters) => client.getStatus(parameters),

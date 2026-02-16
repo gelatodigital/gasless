@@ -7,6 +7,7 @@ import {
   type WebSocketManager
 } from '../../ws/index.js';
 import {
+  type Balance,
   type Capabilities,
   type FeeData,
   type FeeQuote,
@@ -15,6 +16,7 @@ import {
   type GetFeeQuoteParameters,
   type GetGelatoStatusParameters,
   type GetStatusParameters,
+  getBalance,
   getCapabilities,
   getFeeData,
   getFeeQuote,
@@ -31,6 +33,7 @@ import {
 export * from './actions/index.js';
 
 export type GelatoEvmRelayerClient = {
+  getBalance: () => Promise<Balance>;
   getCapabilities: () => Promise<Capabilities>;
   getFeeData: (parameters: GetFeeDataParameters) => Promise<FeeData>;
   getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
@@ -88,6 +91,7 @@ export const createGelatoEvmRelayerClient = (
   });
 
   return {
+    getBalance: () => getBalance(client),
     getCapabilities: () => getCapabilities(client),
     getFeeData: (parameters) => getFeeData(client, parameters),
     getFeeQuote: (parameters) => getFeeQuote(client, parameters),

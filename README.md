@@ -251,6 +251,15 @@ await relayer.ws.unsubscribe(subscription.subscriptionId);
 relayer.ws.disconnect();
 ```
 
+### Get Balance
+
+Check your Gas Tank balance. Available on all client types.
+
+```typescript
+const { balance, decimals, unit } = await relayer.getBalance();
+// Also: client.getBalance(), bundler.getBalance()
+```
+
 ## Sync vs Async
 
 The SDK offers two ways to send transactions:
@@ -307,6 +316,7 @@ const client = createGelatoEvmRelayerClient({
 | `sendTransactionSync` | `{ chainId, to, data, timeout?, pollingInterval?, throwOnReverted?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
 | `waitForReceipt` | `{ id: string, timeout?, pollingInterval?, throwOnReverted? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
+| `getBalance` | - | `Promise<Balance>` | Get Gas Tank balance |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 | `getFeeData` | `{ chainId, gas, l1Fee? }` | `Promise<FeeData>` | Get network fee data |
 
@@ -344,6 +354,7 @@ const client = await createGelatoSmartAccountClient({
 | `sendTransactionSync` | `{ calls, nonce?, nonceKey?, timeout?, pollingInterval?, throwOnReverted?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
 | `waitForReceipt` | `{ id: string, timeout?, pollingInterval?, throwOnReverted? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
+| `getBalance` | - | `Promise<Balance>` | Get Gas Tank balance |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 
 **Nonce Options:**
@@ -397,6 +408,7 @@ const bundler = await createGelatoBundlerClient({
 | `sendUserOperation` | `{ calls }` | `Promise<Hex>` | Send a user operation |
 | `sendUserOperationSync` | `{ calls, timeout?, pollingInterval? }` | `Promise<UserOperationReceipt>` | Send and wait for receipt |
 | `waitForUserOperationReceipt` | `{ hash }` | `Promise<{ receipt }>` | Wait for receipt |
+| `getBalance` | - | `Promise<Balance>` | Get Gas Tank balance |
 | `estimateUserOperationGas` | `UserOperationParams` | `Promise<GasEstimate>` | Estimate gas |
 | `prepareUserOperation` | `UserOperationParams` | `Promise<UserOperation>` | Prepare operation |
 | `getUserOperationGasPrice` | - | `Promise<GasPrice>` | Get current gas prices |
@@ -622,8 +634,10 @@ const receipt = await relayer.sendTransactionSync({
 See the [`/examples`](./examples) directory for complete working examples:
 
 - [`examples/relayer/sponsored`](./examples/relayer/sponsored) - Direct relayer usage
+- [`examples/relayer/get-balance`](./examples/relayer/get-balance) - Get Gas Tank balance
 - [`examples/account/sponsored`](./examples/account/sponsored) - Gelato smart account
 - [`examples/bundler/sponsored`](./examples/bundler/sponsored) - ERC-4337 bundler
+- [`examples/bundler/get-balance`](./examples/bundler/get-balance) - Get Gas Tank balance (bundler)
 - [`examples/relayer/ws`](./examples/relayer/ws) - Relayer WebSocket usage
 - [`examples/bundler/ws`](./examples/bundler/ws) - Bundler WebSocket usage
 - [`examples/account/ws`](./examples/account/ws) - Account WebSocket usage

@@ -1,3 +1,4 @@
+export * from './getBalance.js';
 export * from './getCapabilities.js';
 export * from './getFeeData.js';
 export * from './getFeeQuote.js';

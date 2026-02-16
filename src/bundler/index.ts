@@ -7,7 +7,7 @@ import {
   type UserOperationReceipt
 } from 'viem/account-abstraction';
 import { GELATO_PROD_API, GELATO_STAGING_API } from '../constants/index.js';
-import { getCapabilities } from '../relayer/evm/actions/index.js';
+import { type Balance, getBalance, getCapabilities } from '../relayer/evm/actions/index.js';
 import {
   createWebSocketManager,
   type WebSocketConfig,
@@ -32,6 +32,7 @@ import {
 export * from './actions/index.js';
 
 export type GelatoBundlerActions = Partial<BundlerActions> & {
+  getBalance: () => Promise<Balance>;
   sendUserOperationSync: (
     parameters: SendUserOperationSyncParameters
   ) => Promise<UserOperationReceipt>;
@@ -115,6 +116,7 @@ export const createGelatoBundlerClient = async (
       ({
         estimateUserOperationGas: (parameters) =>
           estimateUserOperationGas(client, parameters, sponsored),
+        getBalance: () => getBalance(transport({})),
         getUserOperationGasPrice: () => getUserOperationGasPrice(client, sponsored),
         getUserOperationQuote: (parameters) => getUserOperationQuote(client, parameters, sponsored),
         prepareUserOperation: (parameters) => prepareUserOperation(client, parameters, sponsored),

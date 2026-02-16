@@ -1,0 +1,17 @@
+{
+  "name": "relayer-get-balance",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@gelatocloud/gasless": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "dotenv": "^17.2.3",
+    "tsx": "^4.21.0",
+    "typescript": "catalog:"
+  }
+}
