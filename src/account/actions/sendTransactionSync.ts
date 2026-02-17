@@ -1,21 +1,18 @@
 import type { TransactionReceipt } from 'viem';
 import type { SmartAccount } from 'viem/account-abstraction';
-import type { GelatoEvmRelayerClient } from '../../relayer/index.js';
+import type { GelatoEvmRelayerClient, SendTransactionSyncOptions } from '../../relayer/index.js';
 import type { GelatoSmartAccountImplementation } from '../adapters/types/index.js';
 import type { SendTransactionParameters } from './sendTransaction.js';
 
-export type SendTransactionSyncParameters = SendTransactionParameters & {
-  timeout?: number;
-  requestTimeout?: number;
-  pollingInterval?: number;
-};
+export type SendTransactionSyncParameters = SendTransactionParameters;
 
 export const sendTransactionSync = async (
   client: GelatoEvmRelayerClient,
   account: SmartAccount<GelatoSmartAccountImplementation>,
-  parameters: SendTransactionSyncParameters
+  parameters: SendTransactionSyncParameters,
+  options?: SendTransactionSyncOptions
 ): Promise<TransactionReceipt> => {
-  const { calls, timeout, requestTimeout, pollingInterval } = parameters;
+  const { calls } = parameters;
 
   const [nonce, deployed] = await Promise.all([
     parameters.nonce ?? account.getNonce({ key: parameters.nonceKey }),
@@ -34,6 +31,6 @@ export const sendTransactionSync = async (
       data,
       to: account.address
     },
-    { pollingInterval, requestTimeout, timeout }
+    options
   );
 };
