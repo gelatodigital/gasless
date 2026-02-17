@@ -6,7 +6,7 @@ import type { WebSocketManager } from '../../../ws/types.js';
 import { waitForTerminalStatus } from '../../../ws/waitForTerminalStatus.js';
 import { type GetStatusParameters, getStatus } from './getStatus.js';
 
-export type WaitForReceiptParameters = GetStatusParameters & {
+export type WaitForReceiptOptions = {
   timeout?: number;
   pollingInterval?: number;
   usePolling?: boolean;
@@ -20,9 +20,10 @@ export type WaitForReceiptParameters = GetStatusParameters & {
  */
 const waitForReceiptPolling = async (
   client: ReturnType<Transport>,
-  parameters: WaitForReceiptParameters
+  parameters: GetStatusParameters,
+  options?: WaitForReceiptOptions
 ): Promise<TerminalStatus> => {
-  const { timeout = 120000, pollingInterval = 1000 } = parameters;
+  const { timeout = 120000, pollingInterval = 2000 } = options || {};
 
   const result = await withTimeout(() => getStatus(client, parameters), {
     pollingInterval,
@@ -55,26 +56,31 @@ const waitForReceiptPolling = async (
  */
 export const waitForReceipt = async (
   client: ReturnType<Transport>,
-  parameters: WaitForReceiptParameters
+  parameters: GetStatusParameters,
+  options?: WaitForReceiptOptions
 ): Promise<TransactionReceipt> => {
-  const { usePolling, throwOnReverted = false } = parameters;
+  const {
+    usePolling,
+    throwOnReverted = false,
+    timeout = 120000,
+    pollingInterval = 2000,
+    ws
+  } = options || {};
+
+  const { id } = parameters;
 
   // Use WebSocket if available and not explicitly disabled
-  const shouldUseWebSocket = parameters.ws && !usePolling;
+  const shouldUseWebSocket = ws && !usePolling;
 
   // Race WebSocket vs HTTP polling
   // Both start simultaneously, fastest wins
-  const { id, timeout = 120000 } = parameters;
-
   const result = shouldUseWebSocket
     ? await Promise.race([
         // biome-ignore lint/style/noNonNullAssertion: asserted above
-        waitForTerminalStatus(parameters.ws!, id, timeout) as Promise<TerminalStatus>,
-        waitForReceiptPolling(client, {
-          ...parameters,
-          pollingInterval: parameters.pollingInterval
-            ? Math.max(2_000, parameters.pollingInterval)
-            : 2_000
+        waitForTerminalStatus(ws!, id, timeout) as Promise<TerminalStatus>,
+        waitForReceiptPolling(client, parameters, {
+          ...options,
+          pollingInterval: pollingInterval ? Math.max(2_000, pollingInterval) : 2_000
         })
       ])
     : await waitForReceiptPolling(client, parameters);

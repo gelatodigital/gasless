@@ -8,7 +8,6 @@ export type SendTransactionSyncParameters = SendTransactionParameters & {
   timeout?: number;
   requestTimeout?: number;
   pollingInterval?: number;
-  usePolling?: boolean;
 };
 
 export const sendTransactionSync = async (
@@ -16,7 +15,7 @@ export const sendTransactionSync = async (
   account: SmartAccount<GelatoSmartAccountImplementation>,
   parameters: SendTransactionSyncParameters
 ): Promise<TransactionReceipt> => {
-  const { timeout, calls } = parameters;
+  const { calls, timeout, requestTimeout, pollingInterval } = parameters;
 
   const [nonce, deployed] = await Promise.all([
     parameters.nonce ?? account.getNonce({ key: parameters.nonceKey }),
@@ -28,12 +27,13 @@ export const sendTransactionSync = async (
     deployed ? undefined : account.signAuthorization().then((x) => [x])
   ]);
 
-  return await client.sendTransactionSync({
-    ...parameters,
-    authorizationList,
-    chainId: account.chain.id,
-    data,
-    timeout,
-    to: account.address
-  });
+  return await client.sendTransactionSync(
+    {
+      authorizationList,
+      chainId: account.chain.id,
+      data,
+      to: account.address
+    },
+    { pollingInterval, requestTimeout, timeout }
+  );
 };

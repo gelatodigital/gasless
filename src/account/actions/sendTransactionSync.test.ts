@@ -30,7 +30,8 @@ describe('sendTransactionSync', () => {
         chainId: 1,
         data: MOCK_CALL_DATA,
         to: MOCK_ADDRESS
-      })
+      }),
+      expect.objectContaining({})
     );
     expect(result).toBe(receipt);
   });
@@ -47,11 +48,12 @@ describe('sendTransactionSync', () => {
     expect(mockClient.sendTransactionSync).toHaveBeenCalledWith(
       expect.objectContaining({
         authorizationList: expect.any(Array)
-      })
+      }),
+      expect.objectContaining({})
     );
   });
 
-  it('passes timeout parameter through', async () => {
+  it('passes timeout parameter through as option', async () => {
     const account = createMockSmartAccount();
 
     await sendTransactionSync(mockClient as never, account as never, {
@@ -60,6 +62,7 @@ describe('sendTransactionSync', () => {
     });
 
     expect(mockClient.sendTransactionSync).toHaveBeenCalledWith(
+      expect.any(Object),
       expect.objectContaining({ timeout: 30000 })
     );
   });

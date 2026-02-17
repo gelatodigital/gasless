@@ -5,13 +5,16 @@ import {
   handleRpcError,
   retrieveIdFromSyncTimeoutError,
   TransactionRejectedError,
-  TransactionRevertedError
+  TransactionRevertedError,
+  type WithRetriesOptions,
+  withRetries
 } from '../../../utils/index.js';
 import type { WebSocketManager } from '../../../ws/types.js';
 import type { SendTransactionParameters } from './sendTransaction.js';
 import { waitForReceipt } from './waitForReceipt.js';
 
-export type SendTransactionSyncParameters = SendTransactionParameters & {
+export type SendTransactionSyncOptions = {
+  retries?: WithRetriesOptions;
   timeout?: number;
   requestTimeout?: number;
   pollingInterval?: number;
@@ -33,77 +36,81 @@ export type SendTransactionSyncParameters = SendTransactionParameters & {
  */
 export const sendTransactionSync = async (
   client: ReturnType<Transport>,
-  parameters: SendTransactionSyncParameters
+  parameters: SendTransactionParameters,
+  options?: SendTransactionSyncOptions
 ): Promise<TransactionReceipt> => {
+  const { chainId, data, to, authorizationList } = parameters;
+
   const {
-    chainId,
-    data,
-    to,
-    context,
-    authorizationList,
     timeout = 120000,
     requestTimeout = 10000,
     ws,
-    throwOnReverted = false
-  } = parameters;
+    throwOnReverted = false,
+    pollingInterval = 2000,
+    retries
+  } = options || {};
 
-  try {
-    const result = await client.request(
-      {
-        method: 'relayer_sendTransactionSync',
-        params: {
-          authorizationList: authorizationList
-            ? authorizationList.map(formatAuthorization)
-            : undefined,
-          chainId: chainId.toString(),
-          context,
-          data,
-          // Always select the minimum timeout, either the http client timeout or the request timeout
-          // The request timeout must always be greater so we can then parse the transaction id from the error
-          // Otherwise the the http client will timeout locally
-          timeout: Math.min(requestTimeout, (client.config.timeout ?? 10000) - 1000),
-          to
-        }
-      },
-      { retryCount: 0 }
-    );
+  return withRetries(async () => {
+    try {
+      const result = await client.request(
+        {
+          method: 'relayer_sendTransactionSync',
+          params: {
+            authorizationList: authorizationList
+              ? authorizationList.map(formatAuthorization)
+              : undefined,
+            chainId: chainId.toString(),
+            data,
+            // Always select the minimum timeout, either the http client timeout or the request timeout
+            // The request timeout must always be greater so we can then parse the transaction id from the error
+            // Otherwise the the http client will timeout locally
+            timeout: Math.min(requestTimeout, (client.config.timeout ?? 10000) - 1000),
+            to
+          }
+        },
+        { retryCount: 0 }
+      );
 
-    const output = terminalStatusSchema.parse(result);
+      const output = terminalStatusSchema.parse(result);
 
-    if (output.status === StatusCode.Reverted && throwOnReverted) {
-      throw new TransactionRevertedError({
-        chainId: output.chainId,
-        createdAt: output.createdAt,
-        errorData: output.data,
-        errorMessage: output.message,
-        id: output.id,
-        // In relayer context, receipt is always TransactionReceipt
-        receipt: output.receipt as TransactionReceipt
-      });
+      if (output.status === StatusCode.Reverted && throwOnReverted) {
+        throw new TransactionRevertedError({
+          chainId: output.chainId,
+          createdAt: output.createdAt,
+          errorData: output.data,
+          errorMessage: output.message,
+          id: output.id,
+          // In relayer context, receipt is always TransactionReceipt
+          receipt: output.receipt as TransactionReceipt
+        });
+      }
+
+      if (output.status === StatusCode.Rejected) {
+        throw new TransactionRejectedError({
+          chainId: output.chainId,
+          createdAt: output.createdAt,
+          errorData: output.data,
+          errorMessage: output.message,
+          id: output.id
+        });
+      }
+
+      return output.receipt as TransactionReceipt;
+    } catch (error) {
+      const id = retrieveIdFromSyncTimeoutError(error);
+      if (id) {
+        return waitForReceipt(
+          client,
+          { id },
+          {
+            pollingInterval,
+            timeout,
+            ws
+          }
+        );
+      }
+
+      handleRpcError(error, { authorizationList, chainId, data, to });
     }
-
-    if (output.status === StatusCode.Rejected) {
-      throw new TransactionRejectedError({
-        chainId: output.chainId,
-        createdAt: output.createdAt,
-        errorData: output.data,
-        errorMessage: output.message,
-        id: output.id
-      });
-    }
-
-    return output.receipt as TransactionReceipt;
-  } catch (error) {
-    const id = retrieveIdFromSyncTimeoutError(error);
-    if (id) {
-      return waitForReceipt(client, {
-        id,
-        pollingInterval: parameters.pollingInterval,
-        timeout,
-        ws
-      });
-    }
-
-    handleRpcError(error, { authorizationList, chainId, data, to });
-  }
+  }, retries);
 };

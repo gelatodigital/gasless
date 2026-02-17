@@ -565,6 +565,53 @@ try {
 
 Properties on `SimulationFailedRpcError`: `revertData`, `params`, `code` (`4211`).
 
+### Automatic Retries
+
+Relayer methods (`sendTransaction`, `sendTransactionSync`) support automatic retries when specific error codes are encountered. This is useful for transient failures like simulation errors (`4211`) that may succeed on a subsequent attempt.
+
+```typescript
+const receipt = await relayer.sendTransactionSync(
+  {
+    chainId: baseSepolia.id,
+    to: '0xTargetContract...',
+    data: '0xCalldata...'
+  },
+  {
+    retries: {
+      max: 3,          // Retry up to 3 times (default: 0, max: 10)
+      delay: 1000,     // Wait 1s between retries (default: 200ms)
+      errorCodes: [4211] // Error codes that trigger a retry (default: [4211])
+    }
+  }
+);
+```
+
+**Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max` | `number` | `0` | Maximum number of retries (0–10). Clamped to 10. |
+| `delay` | `number` | `200` | Delay in milliseconds before each retry. |
+| `errorCodes` | `number[]` | `[4211]` | RPC error codes that trigger a retry. Default is `SimulationFailedRpcError`. |
+
+Works with both async and sync relayer methods:
+
+```typescript
+// Async
+const id = await relayer.sendTransaction(
+  { chainId, to, data },
+  { retries: { max: 3 } }
+);
+
+// Sync
+const receipt = await relayer.sendTransactionSync(
+  { chainId, to, data },
+  { retries: { max: 3 } }
+);
+```
+
+Only errors with a matching `code` property are retried. All other errors are thrown immediately.
+
 ### Automatic Fallback on Timeout
 
 When `sendTransactionSync` rpc request times out, the SDK automatically falls back to polling for the transaction status. If you see a warning message like:
