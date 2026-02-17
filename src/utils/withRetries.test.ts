@@ -102,6 +102,36 @@ describe('withRetries', () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
+  it('uses exponential backoff when configured', async () => {
+    const fn = vi
+      .fn()
+      .mockRejectedValueOnce({ code: SimulationFailedRpcError.code })
+      .mockRejectedValueOnce({ code: SimulationFailedRpcError.code })
+      .mockRejectedValueOnce({ code: SimulationFailedRpcError.code })
+      .mockResolvedValue('ok');
+
+    const promise = withRetries(fn, { backoff: 'exponential', delay: 100, max: 3 });
+
+    // First call fails immediately
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    // Retry 0: delay = 100 * 2^0 = 100ms
+    await vi.advanceTimersByTimeAsync(100);
+    expect(fn).toHaveBeenCalledTimes(2);
+
+    // Retry 1: delay = 100 * 2^1 = 200ms
+    await vi.advanceTimersByTimeAsync(200);
+    expect(fn).toHaveBeenCalledTimes(3);
+
+    // Retry 2: delay = 100 * 2^2 = 400ms
+    await vi.advanceTimersByTimeAsync(400);
+    expect(fn).toHaveBeenCalledTimes(4);
+
+    const result = await promise;
+    expect(result).toBe('ok');
+  });
+
   it('clamps max retries to MAX_RETRIES', async () => {
     const fn = vi.fn().mockRejectedValue({ code: SimulationFailedRpcError.code });
 
