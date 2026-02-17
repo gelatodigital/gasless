@@ -251,6 +251,15 @@ await relayer.ws.unsubscribe(subscription.subscriptionId);
 relayer.ws.disconnect();
 ```
 
+### Get Balance
+
+Check your Gas Tank balance. Available on all client types.
+
+```typescript
+const { balance, decimals, unit } = await relayer.getBalance();
+// Also: client.getBalance(), bundler.getBalance()
+```
+
 ## Sync vs Async
 
 The SDK offers two ways to send transactions:
@@ -261,6 +270,7 @@ The SDK offers two ways to send transactions:
 | Lifecycle events | None (handled internally) | All: `pending`, `submitted`, `success`, `rejected`, `reverted` |
 | Tx hash on (re)submission | Not exposed | `hash` field on every `submitted` event |
 | Control | Minimal — fire and forget | Full — react to each status change via WS subscription |
+| Reorg Protection | None | Yes, a new update event is published |
 
 **Sync** — call `sendTransactionSync` to send the transaction and get the receipt in the same call. If the transaction is not included, the SDK will handle it internally and return a final `TransactionReceipt` by racing http polls and ws updates. Simplest approach when you just need the result:
 
@@ -306,6 +316,7 @@ const client = createGelatoEvmRelayerClient({
 | `sendTransactionSync` | `{ chainId, to, data, timeout?, pollingInterval?, throwOnReverted?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
 | `waitForReceipt` | `{ id: string, timeout?, pollingInterval?, throwOnReverted? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
+| `getBalance` | - | `Promise<Balance>` | Get Gas Tank balance |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 | `getFeeData` | `{ chainId, gas, l1Fee? }` | `Promise<FeeData>` | Get network fee data |
 
@@ -343,6 +354,7 @@ const client = await createGelatoSmartAccountClient({
 | `sendTransactionSync` | `{ calls, nonce?, nonceKey?, timeout?, pollingInterval?, throwOnReverted?, ... }` | `Promise<TransactionReceipt>` | Send and wait for receipt |
 | `getStatus` | `{ id: string }` | `Promise<Status>` | Get transaction status |
 | `waitForReceipt` | `{ id: string, timeout?, pollingInterval?, throwOnReverted? }` | `Promise<TransactionReceipt>` | Wait for receipt, throws on failure |
+| `getBalance` | - | `Promise<Balance>` | Get Gas Tank balance |
 | `getCapabilities` | - | `Promise<Capabilities>` | Get supported chains |
 
 **Nonce Options:**
@@ -396,6 +408,7 @@ const bundler = await createGelatoBundlerClient({
 | `sendUserOperation` | `{ calls }` | `Promise<Hex>` | Send a user operation |
 | `sendUserOperationSync` | `{ calls, timeout?, pollingInterval? }` | `Promise<UserOperationReceipt>` | Send and wait for receipt |
 | `waitForUserOperationReceipt` | `{ hash }` | `Promise<{ receipt }>` | Wait for receipt |
+| `getBalance` | - | `Promise<Balance>` | Get Gas Tank balance |
 | `estimateUserOperationGas` | `UserOperationParams` | `Promise<GasEstimate>` | Estimate gas |
 | `prepareUserOperation` | `UserOperationParams` | `Promise<UserOperation>` | Prepare operation |
 | `getUserOperationGasPrice` | - | `Promise<GasPrice>` | Get current gas prices |
@@ -552,6 +565,55 @@ try {
 
 Properties on `SimulationFailedRpcError`: `revertData`, `params`, `code` (`4211`).
 
+### Automatic Retries
+
+Relayer methods (`sendTransaction`, `sendTransactionSync`) support automatic retries when specific error codes are encountered. This is useful for transient failures like simulation errors (`4211`) that may succeed on a subsequent attempt.
+
+```typescript
+const receipt = await relayer.sendTransactionSync(
+  {
+    chainId: baseSepolia.id,
+    to: '0xTargetContract...',
+    data: '0xCalldata...'
+  },
+  {
+    retries: {
+      max: 3,          // Retry up to 3 times (default: 0, max: 5)
+      delay: 1000,     // Wait 1s between retries (default: 200ms)
+      backoff: 'fixed', // 'exponential' (default) or 'fixed'
+      errorCodes: [4211] // Error codes that trigger a retry (default: [4211])
+    }
+  }
+);
+```
+
+**Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max` | `number` | `0` | Maximum number of retries (0–5). Clamped to 5. |
+| `delay` | `number` | `200` | Base delay in milliseconds before each retry. |
+| `backoff` | `'fixed' \| 'exponential'` | `'exponential'` | Backoff strategy. `'fixed'` keeps constant delay; `'exponential'` doubles each retry (`delay × 2^attempt`). |
+| `errorCodes` | `number[]` | `[4211]` | RPC error codes that trigger a retry. Default is `SimulationFailedRpcError`. |
+
+Works with both async and sync relayer methods:
+
+```typescript
+// Async
+const id = await relayer.sendTransaction(
+  { chainId, to, data },
+  { retries: { max: 3 } }
+);
+
+// Sync
+const receipt = await relayer.sendTransactionSync(
+  { chainId, to, data },
+  { retries: { max: 3 } }
+);
+```
+
+Only errors with a matching `code` property are retried. All other errors are thrown immediately.
+
 ### Automatic Fallback on Timeout
 
 When `sendTransactionSync` rpc request times out, the SDK automatically falls back to polling for the transaction status. If you see a warning message like:
@@ -621,8 +683,10 @@ const receipt = await relayer.sendTransactionSync({
 See the [`/examples`](./examples) directory for complete working examples:
 
 - [`examples/relayer/sponsored`](./examples/relayer/sponsored) - Direct relayer usage
+- [`examples/relayer/get-balance`](./examples/relayer/get-balance) - Get Gas Tank balance
 - [`examples/account/sponsored`](./examples/account/sponsored) - Gelato smart account
 - [`examples/bundler/sponsored`](./examples/bundler/sponsored) - ERC-4337 bundler
+- [`examples/bundler/get-balance`](./examples/bundler/get-balance) - Get Gas Tank balance (bundler)
 - [`examples/relayer/ws`](./examples/relayer/ws) - Relayer WebSocket usage
 - [`examples/bundler/ws`](./examples/bundler/ws) - Bundler WebSocket usage
 - [`examples/account/ws`](./examples/account/ws) - Account WebSocket usage

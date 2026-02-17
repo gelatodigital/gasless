@@ -22,11 +22,12 @@ import {
   getFeeQuote,
   getGelatoStatus,
   getStatus,
+  type SendTransactionOptions,
   type SendTransactionParameters,
-  type SendTransactionSyncParameters,
+  type SendTransactionSyncOptions,
   sendTransaction,
   sendTransactionSync,
-  type WaitForReceiptParameters,
+  type WaitForReceiptOptions,
   waitForReceipt
 } from './actions/index.js';
 
@@ -39,9 +40,18 @@ export type GelatoEvmRelayerClient = {
   getFeeQuote: (parameters: GetFeeQuoteParameters) => Promise<FeeQuote>;
   getGelatoStatus: (parameters: GetGelatoStatusParameters) => Promise<GelatoStatus>;
   getStatus: (parameters: GetStatusParameters) => Promise<Status>;
-  waitForReceipt: (parameters: WaitForReceiptParameters) => Promise<TransactionReceipt>;
-  sendTransaction: (parameters: SendTransactionParameters) => Promise<Hex>;
-  sendTransactionSync: (parameters: SendTransactionSyncParameters) => Promise<TransactionReceipt>;
+  waitForReceipt: (
+    parameters: GetStatusParameters,
+    options?: WaitForReceiptOptions
+  ) => Promise<TransactionReceipt>;
+  sendTransaction: (
+    parameters: SendTransactionParameters,
+    options?: SendTransactionOptions
+  ) => Promise<Hex>;
+  sendTransactionSync: (
+    parameters: SendTransactionParameters,
+    options?: SendTransactionSyncOptions
+  ) => Promise<TransactionReceipt>;
   ws: WebSocketManager<TransactionReceipt>;
 };
 
@@ -97,20 +107,20 @@ export const createGelatoEvmRelayerClient = (
     getFeeQuote: (parameters) => getFeeQuote(client, parameters),
     getGelatoStatus: (parameters) => getGelatoStatus(client, parameters),
     getStatus: (parameters) => getStatus(client, parameters),
-    sendTransaction: (parameters) => sendTransaction(client, parameters),
-    sendTransactionSync: (parameters) =>
-      sendTransactionSync(client, {
-        ...parameters,
-        pollingInterval: parameters.pollingInterval ?? pollingInterval,
-        timeout: parameters.timeout ?? timeout,
-        ws
+    sendTransaction: (parameters, options) => sendTransaction(client, parameters, options),
+    sendTransactionSync: (parameters, options) =>
+      sendTransactionSync(client, parameters, {
+        pollingInterval: pollingInterval ?? 2000,
+        timeout: timeout ?? 120000,
+        ws,
+        ...options
       }),
-    waitForReceipt: (parameters) =>
-      waitForReceipt(client, {
-        ...parameters,
-        pollingInterval: parameters.pollingInterval ?? pollingInterval,
-        timeout: parameters.timeout ?? timeout,
-        ws
+    waitForReceipt: (parameters, options) =>
+      waitForReceipt(client, parameters, {
+        pollingInterval: pollingInterval ?? 2000,
+        timeout: timeout ?? 120000,
+        ws,
+        ...options
       }),
     ws
   };

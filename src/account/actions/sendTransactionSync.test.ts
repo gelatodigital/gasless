@@ -25,12 +25,13 @@ describe('sendTransactionSync', () => {
     expect(account.isDeployed).toHaveBeenCalled();
     expect(account.encodeCallData).toHaveBeenCalled();
     expect(mockClient.sendTransactionSync).toHaveBeenCalledWith(
-      expect.objectContaining({
+      {
         authorizationList: undefined,
         chainId: 1,
         data: MOCK_CALL_DATA,
         to: MOCK_ADDRESS
-      })
+      },
+      undefined
     );
     expect(result).toBe(receipt);
   });
@@ -45,22 +46,55 @@ describe('sendTransactionSync', () => {
 
     expect(account.signAuthorization).toHaveBeenCalled();
     expect(mockClient.sendTransactionSync).toHaveBeenCalledWith(
-      expect.objectContaining({
-        authorizationList: expect.any(Array)
-      })
+      {
+        authorizationList: expect.any(Array),
+        chainId: 1,
+        data: MOCK_CALL_DATA,
+        to: MOCK_ADDRESS
+      },
+      undefined
     );
   });
 
-  it('passes timeout parameter through', async () => {
+  it('passes timeout option through to client.sendTransactionSync', async () => {
     const account = createMockSmartAccount();
 
-    await sendTransactionSync(mockClient as never, account as never, {
-      calls: [{ to: MOCK_ADDRESS, value: 0n }],
-      timeout: 30000
-    });
+    await sendTransactionSync(
+      mockClient as never,
+      account as never,
+      { calls: [{ to: MOCK_ADDRESS, value: 0n }] },
+      { timeout: 30000 }
+    );
 
     expect(mockClient.sendTransactionSync).toHaveBeenCalledWith(
-      expect.objectContaining({ timeout: 30000 })
+      {
+        authorizationList: undefined,
+        chainId: 1,
+        data: MOCK_CALL_DATA,
+        to: MOCK_ADDRESS
+      },
+      { timeout: 30000 }
+    );
+  });
+
+  it('passes retries option through to client.sendTransactionSync', async () => {
+    const account = createMockSmartAccount();
+
+    await sendTransactionSync(
+      mockClient as never,
+      account as never,
+      { calls: [{ to: MOCK_ADDRESS, value: 0n }] },
+      { retries: { max: 5 } }
+    );
+
+    expect(mockClient.sendTransactionSync).toHaveBeenCalledWith(
+      {
+        authorizationList: undefined,
+        chainId: 1,
+        data: MOCK_CALL_DATA,
+        to: MOCK_ADDRESS
+      },
+      { retries: { max: 5 } }
     );
   });
 });

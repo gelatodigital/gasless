@@ -20,7 +20,6 @@ describe('sendTransaction', () => {
       params: {
         authorizationList: undefined,
         chainId: '1',
-        context: undefined,
         data: MOCK_CALL_DATA,
         to: MOCK_ADDRESS
       }
@@ -61,24 +60,6 @@ describe('sendTransaction', () => {
     );
   });
 
-  it('passes context through', async () => {
-    const { client, request } = createMockTransportClient();
-    request.mockResolvedValue(MOCK_TX_HASH);
-
-    await sendTransaction(client, {
-      chainId: 1,
-      context: { customField: 'value' },
-      data: MOCK_CALL_DATA,
-      to: MOCK_ADDRESS
-    });
-
-    expect(request).toHaveBeenCalledWith(
-      expect.objectContaining({
-        params: expect.objectContaining({ context: { customField: 'value' } })
-      })
-    );
-  });
-
   it('throws on RPC error with params', async () => {
     const { client, request } = createMockTransportClient();
     request.mockRejectedValue({ code: 4211, data: '0xdeadbeef', message: 'sim failed' });
@@ -86,5 +67,25 @@ describe('sendTransaction', () => {
     await expect(
       sendTransaction(client, { chainId: 1, data: MOCK_CALL_DATA, to: MOCK_ADDRESS })
     ).rejects.toThrow();
+  });
+
+  it('retries on matching error code and succeeds on retry', async () => {
+    const { client, request } = createMockTransportClient();
+    request
+      .mockRejectedValueOnce({ code: 4211, data: '0xdeadbeef', message: 'sim failed' })
+      .mockResolvedValue(MOCK_TX_HASH);
+
+    const result = await sendTransaction(
+      client,
+      {
+        chainId: 1,
+        data: MOCK_CALL_DATA,
+        to: MOCK_ADDRESS
+      },
+      { retries: { max: 1 } }
+    );
+
+    expect(result).toBe(MOCK_TX_HASH);
+    expect(request).toHaveBeenCalledTimes(2);
   });
 });

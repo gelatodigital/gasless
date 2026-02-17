@@ -27,11 +27,14 @@ describe('waitForReceipt', () => {
       };
     });
 
-    const result = await waitForReceipt(client, {
-      id: MOCK_ID,
-      pollingInterval: 100,
-      timeout: 5000
-    });
+    const result = await waitForReceipt(
+      client,
+      { id: MOCK_ID },
+      {
+        pollingInterval: 100,
+        timeout: 5000
+      }
+    );
 
     expect(result).toBeDefined();
     expect(result.transactionHash).toBeDefined();
@@ -42,7 +45,7 @@ describe('waitForReceipt', () => {
     request.mockResolvedValue(rejectedStatusResponse);
 
     await expect(
-      waitForReceipt(client, { id: MOCK_ID, pollingInterval: 100, timeout: 5000 })
+      waitForReceipt(client, { id: MOCK_ID }, { pollingInterval: 100, timeout: 5000 })
     ).rejects.toThrow(TransactionRejectedError);
   });
 
@@ -59,12 +62,15 @@ describe('waitForReceipt', () => {
     });
 
     await expect(
-      waitForReceipt(client, {
-        id: MOCK_ID,
-        pollingInterval: 100,
-        throwOnReverted: true,
-        timeout: 5000
-      })
+      waitForReceipt(
+        client,
+        { id: MOCK_ID },
+        {
+          pollingInterval: 100,
+          throwOnReverted: true,
+          timeout: 5000
+        }
+      )
     ).rejects.toThrow(TransactionRevertedError);
   });
 
@@ -80,11 +86,14 @@ describe('waitForReceipt', () => {
       status: StatusCode.Reverted
     });
 
-    const result = await waitForReceipt(client, {
-      id: MOCK_ID,
-      pollingInterval: 100,
-      timeout: 5000
-    });
+    const result = await waitForReceipt(
+      client,
+      { id: MOCK_ID },
+      {
+        pollingInterval: 100,
+        timeout: 5000
+      }
+    );
 
     expect(result).toBeDefined();
   });
@@ -96,12 +105,15 @@ describe('waitForReceipt', () => {
 
     const ws = createMockWebSocketManager();
 
-    const promise = waitForReceipt(client, {
-      id: MOCK_ID,
-      pollingInterval: 2000,
-      timeout: 10000,
-      ws
-    });
+    const promise = waitForReceipt(
+      client,
+      { id: MOCK_ID },
+      {
+        pollingInterval: 2000,
+        timeout: 10000,
+        ws
+      }
+    );
 
     // Let the async race start
     await new Promise((resolve) => setTimeout(resolve, 10));
@@ -131,13 +143,16 @@ describe('waitForReceipt', () => {
 
     const ws = createMockWebSocketManager();
 
-    const result = await waitForReceipt(client, {
-      id: MOCK_ID,
-      pollingInterval: 100,
-      timeout: 5000,
-      usePolling: true,
-      ws
-    });
+    const result = await waitForReceipt(
+      client,
+      { id: MOCK_ID },
+      {
+        pollingInterval: 100,
+        timeout: 5000,
+        usePolling: true,
+        ws
+      }
+    );
 
     // WebSocket should not be used
     expect(ws.subscribe).not.toHaveBeenCalled();
@@ -154,10 +169,13 @@ describe('waitForReceipt', () => {
       status: StatusCode.Success
     });
 
-    const result = await waitForReceipt(client, {
-      id: MOCK_ID,
-      pollingInterval: 100
-    });
+    const result = await waitForReceipt(
+      client,
+      { id: MOCK_ID },
+      {
+        pollingInterval: 100
+      }
+    );
 
     expect(result).toBeDefined();
   });

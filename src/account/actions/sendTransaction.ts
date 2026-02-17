@@ -1,6 +1,6 @@
 import type { Call, Hex } from 'viem';
 import type { SmartAccount } from 'viem/account-abstraction';
-import type { GelatoEvmRelayerClient } from '../../relayer/index.js';
+import type { GelatoEvmRelayerClient, SendTransactionOptions } from '../../relayer/index.js';
 import type { GelatoSmartAccountImplementation } from '../adapters/types/index.js';
 
 export type NonceOrKey =
@@ -24,7 +24,8 @@ export type SendTransactionParameters = NonceOrKey & {
 export const sendTransaction = async (
   client: GelatoEvmRelayerClient,
   account: SmartAccount<GelatoSmartAccountImplementation>,
-  parameters: SendTransactionParameters
+  parameters: SendTransactionParameters,
+  options?: SendTransactionOptions
 ): Promise<Hex> => {
   const { calls } = parameters;
 
@@ -38,10 +39,13 @@ export const sendTransaction = async (
     deployed ? undefined : account.signAuthorization().then((x) => [x])
   ]);
 
-  return await client.sendTransaction({
-    authorizationList,
-    chainId: account.chain.id,
-    data,
-    to: account.address
-  });
+  return await client.sendTransaction(
+    {
+      authorizationList,
+      chainId: account.chain.id,
+      data,
+      to: account.address
+    },
+    options
+  );
 };

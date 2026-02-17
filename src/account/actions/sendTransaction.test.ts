@@ -18,12 +18,15 @@ describe('sendTransaction', () => {
     expect(account.getNonce).toHaveBeenCalled();
     expect(account.isDeployed).toHaveBeenCalled();
     expect(account.encodeCallData).toHaveBeenCalled();
-    expect(mockClient.sendTransaction).toHaveBeenCalledWith({
-      authorizationList: undefined,
-      chainId: 1,
-      data: MOCK_CALL_DATA,
-      to: MOCK_ADDRESS
-    });
+    expect(mockClient.sendTransaction).toHaveBeenCalledWith(
+      {
+        authorizationList: undefined,
+        chainId: 1,
+        data: MOCK_CALL_DATA,
+        to: MOCK_ADDRESS
+      },
+      undefined
+    );
     expect(result).toBe(MOCK_TX_HASH);
   });
 
@@ -37,9 +40,13 @@ describe('sendTransaction', () => {
 
     expect(account.signAuthorization).toHaveBeenCalled();
     expect(mockClient.sendTransaction).toHaveBeenCalledWith(
-      expect.objectContaining({
-        authorizationList: expect.any(Array)
-      })
+      {
+        authorizationList: expect.any(Array),
+        chainId: 1,
+        data: MOCK_CALL_DATA,
+        to: MOCK_ADDRESS
+      },
+      undefined
     );
   });
 
@@ -52,7 +59,13 @@ describe('sendTransaction', () => {
 
     expect(account.signAuthorization).not.toHaveBeenCalled();
     expect(mockClient.sendTransaction).toHaveBeenCalledWith(
-      expect.objectContaining({ authorizationList: undefined })
+      {
+        authorizationList: undefined,
+        chainId: 1,
+        data: MOCK_CALL_DATA,
+        to: MOCK_ADDRESS
+      },
+      undefined
     );
   });
 
@@ -77,5 +90,26 @@ describe('sendTransaction', () => {
     });
 
     expect(account.getNonce).toHaveBeenCalledWith({ key: 5n });
+  });
+
+  it('passes retries option through to client.sendTransaction', async () => {
+    const account = createMockSmartAccount();
+
+    await sendTransaction(
+      mockClient as never,
+      account as never,
+      { calls: [{ to: MOCK_ADDRESS, value: 0n }] },
+      { retries: { max: 3 } }
+    );
+
+    expect(mockClient.sendTransaction).toHaveBeenCalledWith(
+      {
+        authorizationList: undefined,
+        chainId: 1,
+        data: MOCK_CALL_DATA,
+        to: MOCK_ADDRESS
+      },
+      { retries: { max: 3 } }
+    );
   });
 });

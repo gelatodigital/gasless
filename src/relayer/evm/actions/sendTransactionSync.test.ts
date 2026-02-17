@@ -63,7 +63,7 @@ describe('sendTransactionSync', () => {
     });
 
     await expect(
-      sendTransactionSync(client, { ...baseParams, throwOnReverted: true })
+      sendTransactionSync(client, baseParams, { throwOnReverted: true })
     ).rejects.toThrow(TransactionRevertedError);
   });
 
@@ -75,7 +75,7 @@ describe('sendTransactionSync', () => {
       message: 'timeout'
     });
 
-    const result = await sendTransactionSync(client, { ...baseParams, timeout: 5000 });
+    const result = await sendTransactionSync(client, baseParams, { timeout: 5000 });
     expect(result).toBeDefined();
   });
 
@@ -97,5 +97,26 @@ describe('sendTransactionSync', () => {
     });
 
     await expect(sendTransactionSync(client, baseParams)).rejects.toThrow();
+  });
+
+  it('retries on matching error code and succeeds on retry', async () => {
+    const { client, request } = createMockTransportClient();
+    request
+      .mockRejectedValueOnce({ code: 4211, data: '0xdeadbeef', message: 'sim failed' })
+      .mockResolvedValue({
+        chainId: 1,
+        createdAt: 1700000000,
+        id: MOCK_ID,
+        receipt: mockRpcTransactionReceipt(),
+        status: StatusCode.Success
+      });
+
+    const result = await sendTransactionSync(client, baseParams, {
+      retries: { max: 1 }
+    });
+
+    expect(result).toBeDefined();
+    expect(result.transactionHash).toBeDefined();
+    expect(request).toHaveBeenCalledTimes(2);
   });
 });
