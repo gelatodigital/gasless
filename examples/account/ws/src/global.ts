@@ -60,7 +60,7 @@ const main = async () => {
     console.log(`[reverted] Transaction ${data.id} reverted on block ${data.receipt.blockNumber}`)
   );
 
-  const taskId = await relayer.sendTransaction({
+  const id = await relayer.sendTransaction({
     calls: [
       {
         data: '0xd09de08a',
@@ -69,7 +69,7 @@ const main = async () => {
     ]
   });
 
-  console.log(`Sent transaction ${taskId}`);
+  console.log(`Sent transaction ${id}`);
 
   // Graceful shutdown
   process.on('SIGINT', async () => {
