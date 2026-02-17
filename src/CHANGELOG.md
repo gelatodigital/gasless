@@ -1,5 +1,12 @@
 # @gelatocloud/gasless
 
+## 0.0.11
+
+### Patch Changes
+
+- 636db74: fix: add max delay to retries
+- 94e53b6: feat: relayer retries
+
 ## 0.0.10
 
 ### Patch Changes
