@@ -11,6 +11,8 @@ export interface WithRetriesOptions {
   delay?: number;
   /** Backoff strategy. 'fixed' keeps constant delay, 'exponential' doubles each retry. Default: 'exponential' */
   backoff?: 'fixed' | 'exponential';
+  /** Maximum delay in ms. Caps exponential backoff so it never exceeds this value. Default: 10000 */
+  maxDelay?: number;
 }
 
 export async function withRetries<T>(
@@ -21,6 +23,7 @@ export async function withRetries<T>(
   const errorCodes = options?.errorCodes ?? [SimulationFailedRpcError.code];
   const delay = options?.delay ?? 200;
   const backoff = options?.backoff ?? 'exponential';
+  const maxDelay = options?.maxDelay ?? 12_000;
 
   for (let attempt = 0; attempt <= max; attempt++) {
     try {
@@ -28,7 +31,7 @@ export async function withRetries<T>(
     } catch (error) {
       const code = (error as { code?: number }).code;
       if (attempt < max && code !== undefined && errorCodes.includes(code)) {
-        const wait = backoff === 'exponential' ? delay * 2 ** attempt : delay;
+        const wait = backoff === 'exponential' ? Math.min(delay * 2 ** attempt, maxDelay) : delay;
         if (wait > 0) await new Promise((r) => setTimeout(r, wait));
         continue;
       }
