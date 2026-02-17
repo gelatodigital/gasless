@@ -63,7 +63,7 @@ describe('withRetries', () => {
       .mockRejectedValueOnce({ code: SimulationFailedRpcError.code })
       .mockResolvedValue('ok');
 
-    const promise = withRetries(fn, { delay: 500, max: 1 });
+    const promise = withRetries(fn, { backoff: 'fixed', delay: 500, max: 1 });
 
     // First call happens immediately and fails
     await vi.advanceTimersByTimeAsync(0);

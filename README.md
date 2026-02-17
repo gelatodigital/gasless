@@ -579,7 +579,9 @@ const receipt = await relayer.sendTransactionSync(
   {
     retries: {
       max: 3,          // Retry up to 3 times (default: 0, max: 10)
+      max: 3,          // Retry up to 3 times (default: 0, max: 5)
       delay: 1000,     // Wait 1s between retries (default: 200ms)
+      backoff: 'fixed', // 'exponential' (default) or 'fixed'
       errorCodes: [4211] // Error codes that trigger a retry (default: [4211])
     }
   }
@@ -592,6 +594,9 @@ const receipt = await relayer.sendTransactionSync(
 |--------|------|---------|-------------|
 | `max` | `number` | `0` | Maximum number of retries (0–10). Clamped to 10. |
 | `delay` | `number` | `200` | Delay in milliseconds before each retry. |
+| `max` | `number` | `0` | Maximum number of retries (0–5). Clamped to 5. |
+| `delay` | `number` | `200` | Base delay in milliseconds before each retry. |
+| `backoff` | `'fixed' \| 'exponential'` | `'exponential'` | Backoff strategy. `'fixed'` keeps constant delay; `'exponential'` doubles each retry (`delay × 2^attempt`). |
 | `errorCodes` | `number[]` | `[4211]` | RPC error codes that trigger a retry. Default is `SimulationFailedRpcError`. |
 
 Works with both async and sync relayer methods:

@@ -9,7 +9,7 @@ export interface WithRetriesOptions {
   max?: number;
   /** Delay in ms before each retry. Default: 200 */
   delay?: number;
-  /** Backoff strategy. 'fixed' keeps constant delay, 'exponential' doubles each retry. Default: 'fixed' */
+  /** Backoff strategy. 'fixed' keeps constant delay, 'exponential' doubles each retry. Default: 'exponential' */
   backoff?: 'fixed' | 'exponential';
 }
 
@@ -20,7 +20,7 @@ export async function withRetries<T>(
   const max = Math.min(options?.max ?? 0, MAX_RETRIES);
   const errorCodes = options?.errorCodes ?? [SimulationFailedRpcError.code];
   const delay = options?.delay ?? 200;
-  const backoff = options?.backoff ?? 'fixed';
+  const backoff = options?.backoff ?? 'exponential';
 
   for (let attempt = 0; attempt <= max; attempt++) {
     try {
