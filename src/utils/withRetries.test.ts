@@ -132,6 +132,42 @@ describe('withRetries', () => {
     expect(result).toBe('ok');
   });
 
+  it('caps exponential backoff at maxDelay', async () => {
+    const fn = vi
+      .fn()
+      .mockRejectedValueOnce({ code: SimulationFailedRpcError.code })
+      .mockRejectedValueOnce({ code: SimulationFailedRpcError.code })
+      .mockRejectedValueOnce({ code: SimulationFailedRpcError.code })
+      .mockResolvedValue('ok');
+
+    // delay=1000, exponential: 1000, 2000, 4000 — but maxDelay=2500 caps it
+    const promise = withRetries(fn, {
+      backoff: 'exponential',
+      delay: 1000,
+      max: 3,
+      maxDelay: 2500
+    });
+
+    // First call fails immediately
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    // Retry 0: delay = min(1000 * 2^0, 2500) = 1000ms
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(fn).toHaveBeenCalledTimes(2);
+
+    // Retry 1: delay = min(1000 * 2^1, 2500) = 2000ms
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(fn).toHaveBeenCalledTimes(3);
+
+    // Retry 2: delay = min(1000 * 2^2, 2500) = 2500ms (capped)
+    await vi.advanceTimersByTimeAsync(2500);
+    expect(fn).toHaveBeenCalledTimes(4);
+
+    const result = await promise;
+    expect(result).toBe('ok');
+  });
+
   it('clamps max retries to MAX_RETRIES', async () => {
     const fn = vi.fn().mockRejectedValue({ code: SimulationFailedRpcError.code });
 
