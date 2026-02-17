@@ -89,6 +89,6 @@ Polls until the transaction reaches a final state (Success, Rejected, or Reverte
 | Concept | Description |
 |---------|-------------|
 | `sponsored()` | Gelato pays gas fees |
-| `sendTransaction` | Async - returns immediately with task ID |
+| `sendTransaction` | Async - returns immediately with ID |
 | `waitForStatus` | Blocks until transaction is finalized |
 | `StatusCode.Success` | Transaction successfully included on-chain |

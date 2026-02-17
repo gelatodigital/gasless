@@ -14,7 +14,8 @@
     "relayer-ws",
     "bundler-ws",
     "relayer-get-balance",
-    "bundler-get-balance"
+    "bundler-get-balance",
+    "browser-ws"
   ],
   "linked": [],
   "updateInternalDependencies": "patch"

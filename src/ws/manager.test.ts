@@ -5,6 +5,7 @@ import { createWebSocketManager } from './manager.js';
 // Mock state
 const mockSend = vi.fn();
 const mockClose = vi.fn();
+const mockConstructorArgs: unknown[][] = [];
 let mockOnOpen: (() => void) | undefined;
 let mockOnMessage: ((event: { data: string }) => void) | undefined;
 
@@ -15,7 +16,8 @@ vi.mock('isomorphic-ws', () => {
     send = mockSend;
     close = mockClose;
 
-    constructor() {
+    constructor(...args: unknown[]) {
+      mockConstructorArgs.push(args);
       setTimeout(() => mockOnOpen?.(), 0);
     }
 
@@ -37,6 +39,10 @@ vi.mock('isomorphic-ws', () => {
   return { default: MockWebSocket };
 });
 
+vi.mock('./env.js', () => ({
+  isBrowser: false
+}));
+
 /** Helper to connect a manager and advance timers */
 async function connectManager(manager: ReturnType<typeof createWebSocketManager>) {
   const p = manager.connect();
@@ -53,6 +59,7 @@ describe('createWebSocketManager', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    mockConstructorArgs.length = 0;
     mockOnOpen = undefined;
     mockOnMessage = undefined;
   });
@@ -81,6 +88,128 @@ describe('createWebSocketManager', () => {
     it('throws when disabled', async () => {
       const manager = createWebSocketManager({ ...config, disable: true });
       await expect(manager.connect()).rejects.toThrow('WebSocket are disabled!');
+    });
+  });
+
+  describe('connect authentication', () => {
+    it('passes Authorization header in Node.js', async () => {
+      const manager = createWebSocketManager(config);
+      await connectManager(manager);
+
+      const [url, opts] = mockConstructorArgs[0] as [
+        string,
+        { headers: { Authorization: string } }
+      ];
+      expect(url).toBe('wss://api.gelato.cloud/ws');
+      expect(opts).toEqual({ headers: { Authorization: 'Bearer test-key' } });
+    });
+
+    it('does not include apiKey in URL in Node.js', async () => {
+      const manager = createWebSocketManager(config);
+      await connectManager(manager);
+
+      const [url] = mockConstructorArgs[0] as [string];
+      expect(url).not.toContain('apiKey');
+    });
+
+    it('passes apiKey as query parameter in browser', async () => {
+      const env = await import('./env.js');
+      vi.mocked(env).isBrowser = true;
+
+      const manager = createWebSocketManager(config);
+      await connectManager(manager);
+
+      const [url] = mockConstructorArgs[0] as [string];
+      const parsed = new URL(url);
+      expect(parsed.searchParams.get('apiKey')).toBe('test-key');
+      expect(mockConstructorArgs[0]).toHaveLength(1);
+
+      vi.mocked(env).isBrowser = false;
+    });
+
+    it('URL-encodes special characters in apiKey for browser', async () => {
+      const env = await import('./env.js');
+      vi.mocked(env).isBrowser = true;
+
+      const specialKey = 'key+with/special=chars&more';
+      const manager = createWebSocketManager({ ...config, apiKey: specialKey });
+      await connectManager(manager);
+
+      const [url] = mockConstructorArgs[0] as [string];
+      const parsed = new URL(url);
+      expect(parsed.searchParams.get('apiKey')).toBe(specialKey);
+      expect(url).not.toContain('+with/');
+
+      vi.mocked(env).isBrowser = false;
+    });
+
+    it('converts https to wss in browser', async () => {
+      const env = await import('./env.js');
+      vi.mocked(env).isBrowser = true;
+
+      const manager = createWebSocketManager(config);
+      await connectManager(manager);
+
+      const [url] = mockConstructorArgs[0] as [string];
+      expect(url).toMatch(/^wss:\/\//);
+
+      vi.mocked(env).isBrowser = false;
+    });
+
+    it('converts http to ws in browser', async () => {
+      const env = await import('./env.js');
+      vi.mocked(env).isBrowser = true;
+
+      const manager = createWebSocketManager({ ...config, baseUrl: 'http://localhost:3000' });
+      await connectManager(manager);
+
+      const [url] = mockConstructorArgs[0] as [string];
+      expect(url).toMatch(/^ws:\/\/localhost:3000\/ws/);
+
+      vi.mocked(env).isBrowser = false;
+    });
+
+    it('does not pass Authorization header in browser', async () => {
+      const env = await import('./env.js');
+      vi.mocked(env).isBrowser = true;
+
+      const manager = createWebSocketManager(config);
+      await connectManager(manager);
+
+      expect(mockConstructorArgs[0]).toHaveLength(1);
+
+      vi.mocked(env).isBrowser = false;
+    });
+
+    it('preserves base URL path in browser', async () => {
+      const env = await import('./env.js');
+      vi.mocked(env).isBrowser = true;
+
+      const manager = createWebSocketManager({ ...config, baseUrl: 'https://api.gelato.cloud' });
+      await connectManager(manager);
+
+      const [url] = mockConstructorArgs[0] as [string];
+      const parsed = new URL(url);
+      expect(parsed.pathname).toBe('/ws');
+      expect(parsed.hostname).toBe('api.gelato.cloud');
+
+      vi.mocked(env).isBrowser = false;
+    });
+
+    it('converts https to wss', async () => {
+      const manager = createWebSocketManager(config);
+      await connectManager(manager);
+
+      const [url] = mockConstructorArgs[0] as [string];
+      expect(url).toMatch(/^wss:\/\//);
+    });
+
+    it('converts http to ws', async () => {
+      const manager = createWebSocketManager({ ...config, baseUrl: 'http://localhost:3000' });
+      await connectManager(manager);
+
+      const [url] = mockConstructorArgs[0] as [string];
+      expect(url).toMatch(/^ws:\/\/localhost:3000\/ws/);
     });
   });
 

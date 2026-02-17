@@ -1,5 +1,6 @@
 import WebSocketImpl from 'isomorphic-ws';
 import { statusSchema } from '../types/schema.js';
+import { isBrowser } from './env.js';
 import { WebSocketConnectionError, WebSocketSubscriptionError } from './errors.js';
 import { createSubscription } from './subscription.js';
 import type {
@@ -197,12 +198,17 @@ export function createWebSocketManager<TReceipt>(
     connectionPromise = new Promise((resolve, reject) => {
       const wsUrl = `${fullConfig.baseUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/ws`;
 
-      // Create WebSocket with authorization header
-      ws = new WebSocketImpl(wsUrl, {
-        headers: {
-          Authorization: `Bearer ${fullConfig.apiKey}`
-        }
-      });
+      if (isBrowser) {
+        const url = new URL(wsUrl);
+        url.searchParams.set('apiKey', fullConfig.apiKey);
+        ws = new WebSocketImpl(url.toString());
+      } else {
+        ws = new WebSocketImpl(wsUrl, {
+          headers: {
+            Authorization: `Bearer ${fullConfig.apiKey}`
+          }
+        });
+      }
 
       ws.onopen = () => {
         reconnectAttempts = 0;
