@@ -1,5 +1,11 @@
 # @gelatocloud/gasless
 
+## 0.0.10
+
+### Patch Changes
+
+- 6cc0560: fix: ws auth for browsers
+
 ## 0.0.9
 
 ### Patch Changes
