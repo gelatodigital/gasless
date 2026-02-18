@@ -78,7 +78,7 @@ export const createGelatoEvmRelayerClient = (
     ...parameters.httpTransportConfig,
     fetchOptions: {
       headers: {
-        'X-API-Key': apiKey,
+        Authorization: `Bearer ${apiKey}`,
         ...parameters.httpTransportConfig?.fetchOptions?.headers
       },
       ...parameters.httpTransportConfig?.fetchOptions
