@@ -11,6 +11,8 @@ export type SendTransactionParameters = {
   authorizationList?: SignedAuthorizationList;
   chainId: number;
   data: Hex;
+  gas?: bigint;
+  skipSimulation?: boolean;
   to: Address;
 };
 
@@ -23,7 +25,7 @@ export const sendTransaction = async (
   parameters: SendTransactionParameters,
   options?: SendTransactionOptions
 ): Promise<Hex> => {
-  const { chainId, data, to, authorizationList } = parameters;
+  const { chainId, data, to, authorizationList, gas, skipSimulation } = parameters;
   const { retries } = options || {};
 
   return withRetries(async () => {
@@ -36,6 +38,8 @@ export const sendTransaction = async (
             : undefined,
           chainId: chainId.toString(),
           data,
+          gas: gas?.toString(),
+          skipSimulation,
           to
         }
       });

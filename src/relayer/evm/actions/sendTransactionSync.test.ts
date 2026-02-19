@@ -99,6 +99,33 @@ describe('sendTransactionSync', () => {
     await expect(sendTransactionSync(client, baseParams)).rejects.toThrow();
   });
 
+  it('includes gas and skipSimulation in RPC params when provided', async () => {
+    const { client, request } = createMockTransportClient();
+    request.mockResolvedValue({
+      chainId: 1,
+      createdAt: 1700000000,
+      id: MOCK_ID,
+      receipt: mockRpcTransactionReceipt(),
+      status: StatusCode.Success
+    });
+
+    await sendTransactionSync(client, {
+      ...baseParams,
+      gas: 100000n,
+      skipSimulation: true
+    });
+
+    expect(request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: expect.objectContaining({
+          gas: '100000',
+          skipSimulation: true
+        })
+      }),
+      expect.anything()
+    );
+  });
+
   it('retries on matching error code and succeeds on retry', async () => {
     const { client, request } = createMockTransportClient();
     request

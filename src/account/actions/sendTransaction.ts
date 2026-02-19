@@ -19,6 +19,8 @@ export type NonceOrKey =
 
 export type SendTransactionParameters = NonceOrKey & {
   calls: Call[];
+  gas?: bigint;
+  skipSimulation?: boolean;
 };
 
 export const sendTransaction = async (
@@ -27,7 +29,7 @@ export const sendTransaction = async (
   parameters: SendTransactionParameters,
   options?: SendTransactionOptions
 ): Promise<Hex> => {
-  const { calls } = parameters;
+  const { calls, gas, skipSimulation } = parameters;
 
   const [nonce, deployed] = await Promise.all([
     parameters.nonce ?? account.getNonce({ key: parameters.nonceKey }),
@@ -44,6 +46,8 @@ export const sendTransaction = async (
       authorizationList,
       chainId: account.chain.id,
       data,
+      gas,
+      skipSimulation,
       to: account.address
     },
     options

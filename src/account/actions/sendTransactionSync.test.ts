@@ -77,6 +77,28 @@ describe('sendTransactionSync', () => {
     );
   });
 
+  it('passes gas and skipSimulation through to client.sendTransactionSync', async () => {
+    const account = createMockSmartAccount();
+
+    await sendTransactionSync(mockClient as never, account as never, {
+      calls: [{ to: MOCK_ADDRESS, value: 0n }],
+      gas: 100000n,
+      skipSimulation: true
+    });
+
+    expect(mockClient.sendTransactionSync).toHaveBeenCalledWith(
+      {
+        authorizationList: undefined,
+        chainId: 1,
+        data: MOCK_CALL_DATA,
+        gas: 100000n,
+        skipSimulation: true,
+        to: MOCK_ADDRESS
+      },
+      undefined
+    );
+  });
+
   it('passes retries option through to client.sendTransactionSync', async () => {
     const account = createMockSmartAccount();
 

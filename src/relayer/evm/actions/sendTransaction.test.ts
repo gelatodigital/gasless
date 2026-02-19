@@ -69,6 +69,31 @@ describe('sendTransaction', () => {
     ).rejects.toThrow();
   });
 
+  it('includes gas and skipSimulation in RPC params when provided', async () => {
+    const { client, request } = createMockTransportClient();
+    request.mockResolvedValue(MOCK_TX_HASH);
+
+    await sendTransaction(client, {
+      chainId: 1,
+      data: MOCK_CALL_DATA,
+      gas: 100000n,
+      skipSimulation: true,
+      to: MOCK_ADDRESS
+    });
+
+    expect(request).toHaveBeenCalledWith({
+      method: 'relayer_sendTransaction',
+      params: {
+        authorizationList: undefined,
+        chainId: '1',
+        data: MOCK_CALL_DATA,
+        gas: '100000',
+        skipSimulation: true,
+        to: MOCK_ADDRESS
+      }
+    });
+  });
+
   it('retries on matching error code and succeeds on retry', async () => {
     const { client, request } = createMockTransportClient();
     request

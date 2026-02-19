@@ -12,7 +12,7 @@ export const sendTransactionSync = async (
   parameters: SendTransactionSyncParameters,
   options?: SendTransactionSyncOptions
 ): Promise<TransactionReceipt> => {
-  const { calls } = parameters;
+  const { calls, gas, skipSimulation } = parameters;
 
   const [nonce, deployed] = await Promise.all([
     parameters.nonce ?? account.getNonce({ key: parameters.nonceKey }),
@@ -29,6 +29,8 @@ export const sendTransactionSync = async (
       authorizationList,
       chainId: account.chain.id,
       data,
+      gas,
+      skipSimulation,
       to: account.address
     },
     options
