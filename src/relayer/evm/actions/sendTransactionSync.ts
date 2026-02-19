@@ -39,7 +39,7 @@ export const sendTransactionSync = async (
   parameters: SendTransactionParameters,
   options?: SendTransactionSyncOptions
 ): Promise<TransactionReceipt> => {
-  const { chainId, data, to, authorizationList } = parameters;
+  const { chainId, data, to, authorizationList, gas, skipSimulation } = parameters;
 
   const {
     timeout = 120000,
@@ -61,6 +61,8 @@ export const sendTransactionSync = async (
               : undefined,
             chainId: chainId.toString(),
             data,
+            gas: gas?.toString(),
+            skipSimulation,
             // Always select the minimum timeout, either the http client timeout or the request timeout
             // The request timeout must always be greater so we can then parse the transaction id from the error
             // Otherwise the the http client will timeout locally

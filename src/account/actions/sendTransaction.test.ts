@@ -92,6 +92,28 @@ describe('sendTransaction', () => {
     expect(account.getNonce).toHaveBeenCalledWith({ key: 5n });
   });
 
+  it('passes gas and skipSimulation through to client.sendTransaction', async () => {
+    const account = createMockSmartAccount();
+
+    await sendTransaction(mockClient as never, account as never, {
+      calls: [{ to: MOCK_ADDRESS, value: 0n }],
+      gas: 100000n,
+      skipSimulation: true
+    });
+
+    expect(mockClient.sendTransaction).toHaveBeenCalledWith(
+      {
+        authorizationList: undefined,
+        chainId: 1,
+        data: MOCK_CALL_DATA,
+        gas: 100000n,
+        skipSimulation: true,
+        to: MOCK_ADDRESS
+      },
+      undefined
+    );
+  });
+
   it('passes retries option through to client.sendTransaction', async () => {
     const account = createMockSmartAccount();
 

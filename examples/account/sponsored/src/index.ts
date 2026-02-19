@@ -63,7 +63,8 @@ const main = async () => {
     /**
      * (Optional) Here you may specify a nonce or nonceKey
      */
-    nonce: encodeNonce(BigInt(Date.now()), 0n)
+    nonce: encodeNonce(BigInt(Date.now()), 0n),
+    skipSimulation: true
   });
 
   const end = Date.now();
