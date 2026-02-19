@@ -1,5 +1,12 @@
 # @gelatocloud/gasless
 
+## 0.0.12
+
+### Patch Changes
+
+- 4c8bb4c: refactor: use authorization header for auth
+- 7d07f28: feat: skip simulation
+
 ## 0.0.11
 
 ### Patch Changes
